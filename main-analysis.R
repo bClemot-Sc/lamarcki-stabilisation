@@ -52,9 +52,13 @@ cat("\n===== CLEANING SUMMARY =====\n")
 cat("Rows in processed data:", nrow(analysis_data), "\n")
 cat("Head values set to NA:", sum(analysis_data$outlier_remove_head, na.rm = TRUE), "\n")
 cat("Thorax values set to NA:", sum(analysis_data$outlier_remove_thorax, na.rm = TRUE), "\n")
-cat("Abdomen values set to NA:", sum(analysis_data$outlier_remove_abdomen, na.rm = TRUE), "\n")
-cat("Rows are not removed at this stage; only flagged response values are set to NA.\n")
-cat("Adjusted models use external factors and therefore automatically omit rows with missing model variables.\n\n")
+cat("Abdomen values set to NA:", sum(analysis_data$outlier_remove_abdomen, na.rm = TRUE), "\n\n")
+
+cat("===== EXTERNAL FACTORS USED IN ADJUSTED MODELS =====\n")
+cat("Rows missing date:", sum(is.na(analysis_data$date)), "\n")
+cat("Rows missing time_decimal_c:", sum(is.na(analysis_data$time_decimal_c)), "\n")
+cat("Rows missing axis_entry:", sum(is.na(analysis_data$axis_entry)), "\n")
+cat("Rows missing progress_c:", sum(is.na(analysis_data$progress_c)), "\n")
 
 # bootstrap confidence interval across beetles
 boot_ci <- function(x, stat_fun, n_boot = 5000) {
@@ -116,14 +120,14 @@ combine_contrasts <- function(contrast_object, group_cols = character()) {
 print_contrasts <- function(data) {
   print(
     as_tibble(data %>%
-      mutate(
-        across(
-          c(estimate, SE, df, lower.CL, upper.CL, t.ratio),
-          ~ round(.x, 3)
-        ),
-        p_raw = format_p(p_raw),
-        p_bonferroni = format_p(p_bonferroni)
-      )),
+                mutate(
+                  across(
+                    c(estimate, SE, df, lower.CL, upper.CL, t.ratio),
+                    ~ round(.x, 3)
+                  ),
+                  p_raw = format_p(p_raw),
+                  p_bonferroni = format_p(p_bonferroni)
+                )),
     n = Inf
   )
 }
@@ -213,16 +217,76 @@ movement_summary <- beetle_movement %>%
   )
 
 cat("\n===== BODY SEGMENT MOVEMENT RANGE — BOOTSTRAP SUMMARY =====\n")
-cat("Outlier response values were set to NA before computing movement ranges.\n")
 cat("Movement range is estimated within beetles after centering each beetle around its own mean.\n")
 cat("Confidence intervals are bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(movement_summary %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
+  n = Inf
+)
+
+# compare movement ranges between body segments
+movement_range_contrasts <- map_dfr(
+  levels(beetle_movement$rotation_plane),
+  function(plane_label) {
+    plane_data <- beetle_movement %>%
+      filter(rotation_plane == plane_label) %>%
+      mutate(body_segment = droplevels(body_segment))
+    
+    fit <- lmer(
+      movement_range ~ body_segment + (1 | beetle_id),
+      data = plane_data,
+      REML = TRUE
+    )
+    
+    emm <- emmeans(fit, ~ body_segment)
+    segment_contrasts <- contrast(
+      emm,
+      method = "pairwise",
+      adjust = "none"
+    )
+    
+    combine_contrasts(segment_contrasts) %>%
+      mutate(
+        rotation_plane = plane_label,
+        n_obs = nobs(fit),
+        n_beetles = n_distinct(fit@frame$beetle_id)
+      )
+  }
+) %>%
+  select(
+    rotation_plane,
+    contrast,
+    estimate,
+    SE,
+    df,
+    lower.CL,
+    upper.CL,
+    t.ratio,
+    p_raw,
+    p_bonferroni,
+    n_obs,
+    n_beetles
+  )
+
+cat("\n===== BODY SEGMENT MOVEMENT RANGE — MODEL CONTRASTS =====\n")
+cat("Movement ranges are compared at the beetle level within each rotation plane.\n")
+cat("Negative estimates mean that the first body segment in the contrast has a smaller movement range than the second.\n")
+cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
+print(
+  as_tibble(movement_range_contrasts %>%
+              mutate(
+                across(
+                  c(estimate, SE, df, lower.CL, upper.CL, t.ratio),
+                  ~ round(.x, 3)
+                ),
+                p_raw = format_p(p_raw),
+                p_bonferroni = format_p(p_bonferroni)
+              )),
   n = Inf
 )
 
@@ -331,6 +395,7 @@ rm(
   beetle_movement,
   movement_n,
   movement_summary,
+  movement_range_contrasts,
   movement_summary_plot,
   p_movement_centered,
   p_movement_range
@@ -410,11 +475,136 @@ cat("Movement range is estimated within beetles after centering each beetle arou
 cat("Confidence intervals are bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(neck_summary %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
+  n = Inf
+)
+
+# compare neck movement range to body-segment movement ranges
+segment_neck_body_ranges <- analysis_data %>%
+  filter(
+    condition == "flat0",
+    antennae == "both"
+  ) %>%
+  select(
+    beetle_id,
+    rotation_plane,
+    head_angle_clean,
+    thorax_angle_clean,
+    abdomen_angle_clean
+  ) %>%
+  pivot_longer(
+    cols = c(
+      head_angle_clean,
+      thorax_angle_clean,
+      abdomen_angle_clean
+    ),
+    names_to = "range_type",
+    values_to = "angle"
+  ) %>%
+  mutate(
+    range_type = recode(
+      range_type,
+      "head_angle_clean" = "head",
+      "thorax_angle_clean" = "thorax",
+      "abdomen_angle_clean" = "abdomen"
+    ),
+    range_type = factor(range_type, levels = c("head", "thorax", "abdomen", "neck"))
+  ) %>%
+  filter(!is.na(angle)) %>%
+  group_by(rotation_plane, range_type, beetle_id) %>%
+  mutate(angle_centered = angle - mean(angle)) %>%
+  summarise(
+    movement_range = max(angle_centered) - min(angle_centered),
+    .groups = "drop"
+  )
+
+segment_neck_ranges <- bind_rows(
+  segment_neck_body_ranges,
+  beetle_neck %>%
+    transmute(
+      rotation_plane,
+      beetle_id,
+      range_type = factor("neck", levels = c("head", "thorax", "abdomen", "neck")),
+      movement_range = neck_range
+    )
+)
+
+segment_neck_range_contrasts <- map_dfr(
+  levels(segment_neck_ranges$rotation_plane),
+  function(plane_label) {
+    plane_data <- segment_neck_ranges %>%
+      filter(rotation_plane == plane_label) %>%
+      mutate(range_type = droplevels(range_type))
+    
+    range_levels <- levels(plane_data$range_type)
+    neck_position <- which(range_levels == "neck")
+    segment_positions <- which(range_levels != "neck")
+    
+    neck_contrasts <- map(
+      segment_positions,
+      function(segment_position) {
+        contrast_vector <- rep(0, length(range_levels))
+        contrast_vector[neck_position] <- 1
+        contrast_vector[segment_position] <- -1
+        contrast_vector
+      }
+    )
+    names(neck_contrasts) <- paste("neck -", range_levels[segment_positions])
+    
+    fit <- lmer(
+      movement_range ~ range_type + (1 | beetle_id),
+      data = plane_data,
+      REML = TRUE
+    )
+    
+    emm <- emmeans(fit, ~ range_type)
+    range_contrasts <- contrast(
+      emm,
+      method = neck_contrasts,
+      adjust = "none"
+    )
+    
+    combine_contrasts(range_contrasts) %>%
+      mutate(
+        rotation_plane = plane_label,
+        n_obs = nobs(fit),
+        n_beetles = n_distinct(fit@frame$beetle_id)
+      )
+  }
+) %>%
+  select(
+    rotation_plane,
+    contrast,
+    estimate,
+    SE,
+    df,
+    lower.CL,
+    upper.CL,
+    t.ratio,
+    p_raw,
+    p_bonferroni,
+    n_obs,
+    n_beetles
+  )
+
+cat("\n===== NECK VERSUS BODY-SEGMENT MOVEMENT RANGE — MODEL CONTRASTS =====\n")
+cat("Movement ranges are compared at the beetle level within each rotation plane.\n")
+cat("Positive estimates mean that neck movement range is larger than the body-segment range in the contrast.\n")
+cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
+print(
+  as_tibble(segment_neck_range_contrasts %>%
+              mutate(
+                across(
+                  c(estimate, SE, df, lower.CL, upper.CL, t.ratio),
+                  ~ round(.x, 3)
+                ),
+                p_raw = format_p(p_raw),
+                p_bonferroni = format_p(p_bonferroni)
+              )),
   n = Inf
 )
 
@@ -521,6 +711,9 @@ rm(
   beetle_neck,
   neck_n,
   neck_summary,
+  segment_neck_body_ranges,
+  segment_neck_ranges,
+  segment_neck_range_contrasts,
   neck_summary_plot,
   p_neck_centered,
   p_neck_range
@@ -632,15 +825,47 @@ cat("For head_vs_thorax, slope = 1 means no stabilisation and slope = 0 means pe
 cat("For neck_vs_thorax, slope = 0 means no neck response and slope = -1 means perfect compensation.\n\n")
 print(
   as_tibble(compensation_summary %>%
-    mutate(
-      across(
-        c(slope, se, df, t_value, ci_low, ci_high, compensation_percent),
-        ~ round(.x, 3)
-      ),
-      p_value = format_p(p_value)
-    )),
+              mutate(
+                across(
+                  c(slope, se, df, t_value, ci_low, ci_high, compensation_percent),
+                  ~ round(.x, 3)
+                ),
+                p_value = format_p(p_value)
+              )),
   n = Inf
 )
+
+# model-slope lines for plots
+compensation_plot_lines <- compensation_summary %>%
+  filter(model_version == "external_adjusted") %>%
+  select(rotation_plane, model, slope, ci_low, ci_high) %>%
+  left_join(
+    compensation_data %>%
+      group_by(rotation_plane) %>%
+      summarise(
+        x_min = min(thorax_dev),
+        x_max = max(thorax_dev),
+        .groups = "drop"
+      ),
+    by = "rotation_plane"
+  ) %>%
+  rowwise() %>%
+  mutate(thorax_dev = list(seq(x_min, x_max, length.out = 100))) %>%
+  unnest(thorax_dev) %>%
+  ungroup() %>%
+  mutate(
+    fit = slope * thorax_dev,
+    ci_a = ci_low * thorax_dev,
+    ci_b = ci_high * thorax_dev,
+    ci_lower = pmin(ci_a, ci_b),
+    ci_upper = pmax(ci_a, ci_b)
+  )
+
+head_plot_lines <- compensation_plot_lines %>%
+  filter(model == "head_vs_thorax")
+
+neck_plot_lines <- compensation_plot_lines %>%
+  filter(model == "neck_vs_thorax")
 
 # head stabilisation plot
 p_head_stabilisation <- ggplot(
@@ -654,12 +879,32 @@ p_head_stabilisation <- ggplot(
   geom_vline(xintercept = 0, colour = "grey80") +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "#D55E00") +
   geom_point(alpha = 0.25, size = 1.0) +
-  geom_smooth(method = "lm", se = TRUE, colour = "black") +
+  geom_ribbon(
+    data = head_plot_lines,
+    aes(
+      x = thorax_dev,
+      ymin = ci_lower,
+      ymax = ci_upper
+    ),
+    inherit.aes = FALSE,
+    fill = "grey70",
+    alpha = 0.35
+  ) +
+  geom_line(
+    data = head_plot_lines,
+    aes(
+      x = thorax_dev,
+      y = fit
+    ),
+    inherit.aes = FALSE,
+    colour = "black",
+    linewidth = 0.9
+  ) +
   facet_wrap(~ rotation_plane) +
   coord_equal() +
   labs(
     title = "Does the head follow thorax movement?",
-    subtitle = "Variables are centered within each beetle; dashed line = no stabilisation",
+    subtitle = "Variables are centered within each beetle; solid line = adjusted mixed-model slope; dashed line = no stabilisation",
     x = "Thorax deviation from beetle mean (deg)",
     y = "Head deviation from beetle mean (deg)"
   ) +
@@ -677,12 +922,32 @@ p_neck_compensation <- ggplot(
   geom_vline(xintercept = 0, colour = "grey80") +
   geom_abline(slope = -1, intercept = 0, linetype = "dashed", colour = "#D55E00") +
   geom_point(alpha = 0.25, size = 1.0) +
-  geom_smooth(method = "lm", se = TRUE, colour = "black") +
+  geom_ribbon(
+    data = neck_plot_lines,
+    aes(
+      x = thorax_dev,
+      ymin = ci_lower,
+      ymax = ci_upper
+    ),
+    inherit.aes = FALSE,
+    fill = "grey70",
+    alpha = 0.35
+  ) +
+  geom_line(
+    data = neck_plot_lines,
+    aes(
+      x = thorax_dev,
+      y = fit
+    ),
+    inherit.aes = FALSE,
+    colour = "black",
+    linewidth = 0.9
+  ) +
   facet_wrap(~ rotation_plane) +
   coord_equal() +
   labs(
     title = "Does the neck compensate thorax movement?",
-    subtitle = "Variables are centered within each beetle; dashed line = perfect compensation",
+    subtitle = "Variables are centered within each beetle; solid line = adjusted mixed-model slope; dashed line = perfect compensation",
     x = "Thorax deviation from beetle mean (deg)",
     y = "Neck deviation from beetle mean (deg)"
   ) +
@@ -714,6 +979,9 @@ print(p_neck_compensation)
 rm(
   compensation_data,
   compensation_summary,
+  compensation_plot_lines,
+  head_plot_lines,
+  neck_plot_lines,
   p_head_stabilisation,
   p_neck_compensation,
   slope_summary
@@ -790,11 +1058,11 @@ cat("\n===== HORIZON EFFECT — DESCRIPTIVE HEAD ANGLES =====\n")
 cat("Values are beetle-level mean head angles with bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(horizon_descriptive %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
   n = Inf
 )
 
@@ -1085,11 +1353,11 @@ cat("\n===== ANTENNAE EFFECT — DESCRIPTIVE HEAD ANGLES, LEFT/RIGHT SEPARATED =
 cat("Values are beetle-level mean head angles with bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(antennae_sep_descriptive %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
   n = Inf
 )
 
@@ -1129,11 +1397,11 @@ cat("\n===== ANTENNAE EFFECT — DESCRIPTIVE HEAD ANGLES, SINGLE ANTENNA MERGED 
 cat("Values are beetle-level mean head angles with bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(antennae_grp_descriptive %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
   n = Inf
 )
 
@@ -1538,11 +1806,11 @@ cat("\n===== COMBINED HORIZON AND ANTENNAE EFFECTS — ROLL DESCRIPTIVE HEAD ANG
 cat("Values are beetle-level mean head angles with bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(combined_roll_descriptive %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
   n = Inf
 )
 
@@ -1612,6 +1880,56 @@ cat("Both unadjusted and external-factor-adjusted models are shown.\n")
 cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
 print_contrasts(combined_roll_contrasts)
 
+# compare antennae groups within each roll horizon condition
+emm_combined_roll_antennae <- emmeans(
+  mod_combined_roll,
+  ~ antennae_grp | condition
+)
+
+emm_combined_roll_antennae_adjusted <- emmeans(
+  mod_combined_roll_adjusted,
+  ~ antennae_grp | condition
+)
+
+contrast_combined_roll_antennae <- contrast(
+  emm_combined_roll_antennae,
+  method = "pairwise",
+  adjust = "none"
+)
+
+contrast_combined_roll_antennae_adjusted <- contrast(
+  emm_combined_roll_antennae_adjusted,
+  method = "pairwise",
+  adjust = "none"
+)
+
+combined_roll_antennae_contrasts <- bind_rows(
+  combine_contrasts(contrast_combined_roll_antennae, group_cols = "condition") %>%
+    mutate(model_version = "unadjusted"),
+  combine_contrasts(contrast_combined_roll_antennae_adjusted, group_cols = "condition") %>%
+    mutate(model_version = "external_adjusted")
+) %>%
+  select(
+    model_version,
+    condition,
+    contrast,
+    estimate,
+    SE,
+    df,
+    lower.CL,
+    upper.CL,
+    t.ratio,
+    p_raw,
+    p_bonferroni
+  )
+
+cat("\n===== COMBINED HORIZON AND ANTENNAE EFFECTS — ROLL ANTENNAE CONTRASTS WITHIN HORIZON CONDITION =====\n")
+cat("Contrasts compare antennae groups within each roll horizon condition.\n")
+cat("Negative estimates mean that the first antennae group has a lower corrected head angle than the second.\n")
+cat("Both unadjusted and external-factor-adjusted models are shown.\n")
+cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
+print_contrasts(combined_roll_antennae_contrasts)
+
 combined_roll_emmeans <- as.data.frame(confint(emmeans(mod_combined_roll_adjusted, ~ condition * antennae_grp))) %>%
   rename(
     ci_low = lower.CL,
@@ -1658,11 +1976,11 @@ cat("\n===== COMBINED HORIZON AND ANTENNAE EFFECTS — PITCH DESCRIPTIVE HEAD AN
 cat("Values are beetle-level mean head angles with bootstrap 95% CIs across beetles.\n\n")
 print(
   as_tibble(combined_pitch_descriptive %>%
-    mutate(
-      estimate = round(estimate, 2),
-      ci_low = round(ci_low, 2),
-      ci_high = round(ci_high, 2)
-    )),
+              mutate(
+                estimate = round(estimate, 2),
+                ci_low = round(ci_low, 2),
+                ci_high = round(ci_high, 2)
+              )),
   n = Inf
 )
 
@@ -1737,6 +2055,56 @@ cat("Contrasts show the tilted-minus-flat horizon effect within each antennae co
 cat("Both unadjusted and external-factor-adjusted models are shown.\n")
 cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
 print_contrasts(combined_pitch_contrasts)
+
+# compare antennae groups within each pitch horizon condition
+emm_combined_pitch_antennae <- emmeans(
+  mod_combined_pitch,
+  ~ antennae_grp | horizon_pitch
+)
+
+emm_combined_pitch_antennae_adjusted <- emmeans(
+  mod_combined_pitch_adjusted,
+  ~ antennae_grp | horizon_pitch
+)
+
+contrast_combined_pitch_antennae <- contrast(
+  emm_combined_pitch_antennae,
+  method = "pairwise",
+  adjust = "none"
+)
+
+contrast_combined_pitch_antennae_adjusted <- contrast(
+  emm_combined_pitch_antennae_adjusted,
+  method = "pairwise",
+  adjust = "none"
+)
+
+combined_pitch_antennae_contrasts <- bind_rows(
+  combine_contrasts(contrast_combined_pitch_antennae, group_cols = "horizon_pitch") %>%
+    mutate(model_version = "unadjusted"),
+  combine_contrasts(contrast_combined_pitch_antennae_adjusted, group_cols = "horizon_pitch") %>%
+    mutate(model_version = "external_adjusted")
+) %>%
+  select(
+    model_version,
+    horizon_pitch,
+    contrast,
+    estimate,
+    SE,
+    df,
+    lower.CL,
+    upper.CL,
+    t.ratio,
+    p_raw,
+    p_bonferroni
+  )
+
+cat("\n===== COMBINED HORIZON AND ANTENNAE EFFECTS — PITCH ANTENNAE CONTRASTS WITHIN HORIZON CONDITION =====\n")
+cat("Contrasts compare antennae groups within each pitch horizon condition.\n")
+cat("Negative estimates mean that the first antennae group has a lower corrected head angle than the second.\n")
+cat("Both unadjusted and external-factor-adjusted models are shown.\n")
+cat("Both raw and Bonferroni-adjusted p-values are shown.\n\n")
+print_contrasts(combined_pitch_antennae_contrasts)
 
 combined_pitch_emmeans <- as.data.frame(confint(emmeans(mod_combined_pitch_adjusted, ~ horizon_pitch * antennae_grp))) %>%
   rename(
@@ -1938,6 +2306,11 @@ rm(
   contrast_combined_roll,
   contrast_combined_roll_adjusted,
   combined_roll_contrasts,
+  emm_combined_roll_antennae,
+  emm_combined_roll_antennae_adjusted,
+  contrast_combined_roll_antennae,
+  contrast_combined_roll_antennae_adjusted,
+  combined_roll_antennae_contrasts,
   combined_roll_emmeans,
   combined_pitch,
   combined_pitch_descriptive,
@@ -1949,6 +2322,11 @@ rm(
   contrast_combined_pitch,
   contrast_combined_pitch_adjusted,
   combined_pitch_contrasts,
+  emm_combined_pitch_antennae,
+  emm_combined_pitch_antennae_adjusted,
+  contrast_combined_pitch_antennae,
+  contrast_combined_pitch_antennae_adjusted,
+  combined_pitch_antennae_contrasts,
   combined_pitch_emmeans,
   combined_antennae_labels,
   combined_antennae_colours,
