@@ -1,0 +1,390 @@
+SCRIPT VERSION: v2-supplementary 
+glmmTMB version: 1.1.15.2 
+dhglm version: 2.0 
+
+============================================================
+DEFINITIONS
+============================================================
+Same data and model structures as main-analysis.R.
+Each test removes interaction term(s) from a model and compares the two fits.
+Tests are not corrected for multiple testing, read them as sensitivity checks.
+
+
+============================================================
+Q3. IS THE HORIZON x ANTENNAE INTERACTION NEEDED FOR MEAN ORIENTATION?
+============================================================
+Full: Y ~ Horizon * antennae_grp + (1 | beetle_id); additive: Y ~ Horizon + antennae_grp + (1 | beetle_id).
+Both fitted with ML and the same cell-specific residual variance. Likelihood ratio test, AIC and BIC.
+
+        model                     effect  tested_in  Chisq Df  p_value AIC_reduced
+    roll head     condition:antennae_grp full model  4.849  2 8.85e-02    2776.441
+  roll thorax     condition:antennae_grp full model  3.392  2 1.83e-01    3765.008
+   pitch head horizon_pitch:antennae_grp full model 26.125  4 2.99e-05    3043.497
+ pitch thorax horizon_pitch:antennae_grp full model 19.632  4 5.90e-04    3532.251
+ AIC_full BIC_reduced BIC_full
+ 2775.592    2821.667 2829.041
+ 3765.616    3810.186 3819.007
+ 3025.372    3105.595 3104.030
+ 3520.619    3594.478 3599.440
+
+============================================================
+Q4. IS THE HORIZON x ANTENNAE INTERACTION NEEDED FOR ANGULAR SPREAD?
+============================================================
+DHGLM scale model, full: log(phi) ~ Horizon * antennae_grp; additive: log(phi) ~ Horizon + antennae_grp.
+The interaction compares full and additive. Horizon and antennae main effects are tested in the additive model.
+Adjusted-profile LRT; a one-df test that comes out negative uses a Wald test instead.
+
+        model                     effect  full_ml reduced_ml raw_Chisq Chisq Df
+    roll head     condition:antennae_grp 2688.785   2695.483     6.697 6.697  2
+    roll head                  condition 2695.483   2700.748     5.266 5.266  1
+    roll head               antennae_grp 2695.483   2703.189     7.706 7.706  2
+  roll thorax     condition:antennae_grp 3699.095   3704.384     5.289 5.289  2
+  roll thorax                  condition 3704.384   3703.935    -0.449 0.070  1
+  roll thorax               antennae_grp 3704.384   3705.370     0.986 0.986  2
+   pitch head horizon_pitch:antennae_grp 2937.532   2943.442     5.910 5.910  4
+   pitch head              horizon_pitch 2943.442   2950.205     6.763 6.763  2
+   pitch head               antennae_grp 2943.442   2947.724     4.282 4.282  2
+ pitch thorax horizon_pitch:antennae_grp 3417.495   3419.559     2.064 2.064  4
+ pitch thorax              horizon_pitch 3419.559   3424.463     4.903 4.903  2
+ pitch thorax               antennae_grp 3419.559   3421.391     1.832 1.832  2
+  p_value caic_full caic_reduced          test_method
+ 3.51e-02  2690.619     2697.596 adjusted-profile LRT
+ 2.17e-02  2697.596     2702.366 adjusted-profile LRT
+ 2.12e-02  2697.596     2707.292 adjusted-profile LRT
+ 7.10e-02  3706.365     3710.264 adjusted-profile LRT
+ 7.92e-01  3710.264     3709.774        Wald fallback
+ 6.11e-01  3710.264     3710.199 adjusted-profile LRT
+ 2.06e-01  2908.700     2914.126 adjusted-profile LRT
+ 3.40e-02  2914.126     2924.433 adjusted-profile LRT
+ 1.18e-01  2914.126     2917.809 adjusted-profile LRT
+ 7.24e-01  3420.880     3422.023 adjusted-profile LRT
+ 8.61e-02  3422.023     3425.919 adjusted-profile LRT
+ 4.00e-01  3422.023     3423.409 adjusted-profile LRT
+
+============================================================
+Q5. ARE THE THORAX SLOPE INTERACTIONS NEEDED FOR HEAD-THORAX COUPLING?
+============================================================
+Full: head ~ thorax_dev * Horizon * antennae_grp + (1 + thorax_dev | beetle_id).
+The three-way term is tested in the full model, the other terms in the model without the three-way term.
+Both fitted with ML and the same cell-specific residual variance. Likelihood ratio test, AIC and BIC.
+
+      model                                      effect          tested_in  Chisq
+  roll head           thorax_dev:condition:antennae_grp         full model  0.974
+  roll head                        thorax_dev:condition no-three-way model  7.189
+  roll head                     thorax_dev:antennae_grp no-three-way model  3.708
+  roll head both thorax_dev interactions (common slope) no-three-way model 10.765
+ pitch head       thorax_dev:horizon_pitch:antennae_grp         full model  0.094
+ pitch head                    thorax_dev:horizon_pitch no-three-way model  0.859
+ pitch head                     thorax_dev:antennae_grp no-three-way model  0.794
+ pitch head both thorax_dev interactions (common slope) no-three-way model  1.411
+ Df  p_value AIC_reduced AIC_full BIC_reduced BIC_full
+  2 6.14e-01    2335.545 2338.571    2413.578 2424.819
+  1 7.33e-03    2340.734 2335.545    2414.661 2413.578
+  2 1.57e-01    2335.253 2335.545    2405.072 2413.578
+  3 1.31e-02    2340.310 2335.545    2406.023 2413.578
+  4 9.99e-01    2704.216 2712.122    2811.853 2836.318
+  2 6.51e-01    2701.075 2704.216    2800.432 2811.853
+  2 6.72e-01    2701.010 2704.216    2800.367 2811.853
+  4 8.42e-01    2697.626 2704.216    2788.704 2811.853
+
+============================================================
+SENSITIVITY. DO THE PLANNED CONTRASTS CHANGE WITHOUT THE INTERACTIONS?
+============================================================
+Same contrasts and Holm families as main-analysis.R, from the full model and the reduced model (REML).
+Q3: mean orientation difference (deg). Q4: SD ratio. Q5: head-thorax slope difference.
+Reduced = additive model (Q3, Q4) or model without the three-way term (Q5).
+In an additive model the horizon and antenna differences are the same in every group.
+
+============================================================
+Q3 contrasts, full vs additive
+============================================================
+16 of 54 contrasts change between significant and non-significant (Holm p < 0.05) without the interaction.
+
+        model  family      contrast           group estimate_full estimate_reduced
+    roll head horizon tilted - flat            both         3.698            4.484
+    roll head horizon tilted - flat             one         3.321            4.484
+    roll head horizon tilted - flat            none         5.683            4.484
+    roll head antenna    both - one           flat0        -0.447           -0.137
+    roll head antenna   both - none           flat0         0.208           -0.978
+    roll head antenna    one - none           flat0         0.655           -0.840
+    roll head antenna    both - one        tilted10        -0.069           -0.137
+    roll head antenna   both - none        tilted10        -1.777           -0.978
+    roll head antenna    one - none        tilted10        -1.708           -0.840
+  roll thorax horizon tilted - flat            both         5.691            4.705
+  roll thorax horizon tilted - flat             one         0.395            4.705
+  roll thorax horizon tilted - flat            none         6.792            4.705
+  roll thorax antenna    both - one           flat0        -2.514            0.040
+  roll thorax antenna   both - none           flat0        -1.781           -2.613
+  roll thorax antenna    one - none           flat0         0.733           -2.653
+  roll thorax antenna    both - one        tilted10         2.781            0.040
+  roll thorax antenna   both - none        tilted10        -2.883           -2.613
+  roll thorax antenna    one - none        tilted10        -5.664           -2.653
+   pitch head horizon    low - flat            both        -2.672           -3.099
+   pitch head horizon   high - flat            both        -1.852            4.053
+   pitch head horizon    low - high            both        -0.820           -7.151
+   pitch head horizon    low - flat             one        -2.225           -3.099
+   pitch head horizon   high - flat             one         4.925            4.053
+   pitch head horizon    low - high             one        -7.150           -7.151
+   pitch head horizon    low - flat            none        -5.610           -3.099
+   pitch head horizon   high - flat            none         5.298            4.053
+   pitch head horizon    low - high            none       -10.907           -7.151
+   pitch head antenna    both - one     flat0_pitch        -3.069           -3.825
+   pitch head antenna   both - none     flat0_pitch        -6.170           -6.310
+   pitch head antenna    one - none     flat0_pitch        -3.101           -2.485
+   pitch head antenna    both - one tilted10_pitchL        -3.516           -3.825
+   pitch head antenna   both - none tilted10_pitchL        -3.233           -6.310
+   pitch head antenna    one - none tilted10_pitchL         0.283           -2.485
+   pitch head antenna    both - one tilted10_pitchR        -9.846           -3.825
+   pitch head antenna   both - none tilted10_pitchR       -13.320           -6.310
+   pitch head antenna    one - none tilted10_pitchR        -3.474           -2.485
+ pitch thorax horizon    low - flat            both         0.243           -2.305
+ pitch thorax horizon   high - flat            both        -3.032            3.323
+ pitch thorax horizon    low - high            both         3.276           -5.628
+ pitch thorax horizon    low - flat             one        -2.528           -2.305
+ pitch thorax horizon   high - flat             one         3.011            3.323
+ pitch thorax horizon    low - high             one        -5.539           -5.628
+ pitch thorax horizon    low - flat            none        -5.661           -2.305
+ pitch thorax horizon   high - flat            none         7.069            3.323
+ pitch thorax horizon    low - high            none       -12.731           -5.628
+ pitch thorax antenna    both - one     flat0_pitch        -6.306           -6.238
+ pitch thorax antenna   both - none     flat0_pitch        -9.518           -9.765
+ pitch thorax antenna    one - none     flat0_pitch        -3.212           -3.528
+ pitch thorax antenna    both - one tilted10_pitchL        -3.535           -6.238
+ pitch thorax antenna   both - none tilted10_pitchL        -3.614           -9.765
+ pitch thorax antenna    one - none tilted10_pitchL        -0.079           -3.528
+ pitch thorax antenna    both - one tilted10_pitchR       -12.349           -6.238
+ pitch thorax antenna   both - none tilted10_pitchR       -19.620           -9.765
+ pitch thorax antenna    one - none tilted10_pitchR        -7.271           -3.528
+ p_holm_full p_holm_reduced same_call
+    1.27e-04       4.58e-18      TRUE
+    6.86e-04       4.58e-18      TRUE
+    1.08e-13       4.58e-18      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       8.38e-01      TRUE
+    1.00e+00       8.38e-01      TRUE
+    1.00e+00       1.00e+00      TRUE
+    2.01e-01       8.38e-01      TRUE
+    2.01e-01       8.38e-01      TRUE
+    1.02e-01       5.55e-03     FALSE
+    8.88e-01       5.55e-03     FALSE
+    6.73e-03       5.55e-03      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       9.67e-01      TRUE
+    1.00e+00       9.67e-01      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       9.67e-01      TRUE
+    1.39e-01       9.67e-01      TRUE
+    8.71e-02       3.28e-05     FALSE
+    3.18e-01       2.81e-06     FALSE
+    5.14e-01       6.26e-14     FALSE
+    1.11e-01       3.28e-05     FALSE
+    1.13e-04       2.81e-06      TRUE
+    1.07e-07       6.26e-14      TRUE
+    1.13e-04       3.28e-05      TRUE
+    2.38e-05       2.81e-06      TRUE
+    8.83e-15       6.26e-14      TRUE
+    8.06e-02       2.24e-03     FALSE
+    3.84e-05       4.39e-08      TRUE
+    2.41e-02       5.58e-03      TRUE
+    4.91e-02       2.24e-03      TRUE
+    8.06e-02       4.39e-08     FALSE
+    8.36e-01       5.58e-03     FALSE
+    2.59e-08       2.24e-03      TRUE
+    8.06e-17       4.39e-08      TRUE
+    4.91e-02       5.58e-03      TRUE
+    9.01e-01       1.67e-01      TRUE
+    6.95e-01       6.62e-02      TRUE
+    6.95e-01       1.49e-03     FALSE
+    6.95e-01       1.67e-01      TRUE
+    5.57e-01       6.62e-02      TRUE
+    6.08e-02       1.49e-03     FALSE
+    6.08e-02       1.67e-01      TRUE
+    3.05e-03       6.62e-02     FALSE
+    8.77e-07       1.49e-03      TRUE
+    8.47e-03       3.15e-04      TRUE
+    1.34e-05       2.72e-09      TRUE
+    2.69e-01       1.96e-02     FALSE
+    3.82e-01       3.15e-04     FALSE
+    3.82e-01       2.72e-09     FALSE
+    9.73e-01       1.96e-02     FALSE
+    2.62e-05       3.15e-04      TRUE
+    1.04e-12       2.72e-09      TRUE
+    8.14e-03       1.96e-02      TRUE
+
+============================================================
+Q4 contrasts, full vs additive
+============================================================
+11 of 54 contrasts change between significant and non-significant (Holm p < 0.05) without the interaction.
+
+        model  family                          contrast           group
+    roll head horizon                  tilted10 - flat0            both
+    roll head horizon                  tilted10 - flat0             one
+    roll head horizon                  tilted10 - flat0            none
+    roll head antenna                        both - one           flat0
+    roll head antenna                       both - none           flat0
+    roll head antenna                        one - none           flat0
+    roll head antenna                        both - one        tilted10
+    roll head antenna                       both - none        tilted10
+    roll head antenna                        one - none        tilted10
+  roll thorax horizon                  tilted10 - flat0            both
+  roll thorax horizon                  tilted10 - flat0             one
+  roll thorax horizon                  tilted10 - flat0            none
+  roll thorax antenna                        both - one           flat0
+  roll thorax antenna                       both - none           flat0
+  roll thorax antenna                        one - none           flat0
+  roll thorax antenna                        both - one        tilted10
+  roll thorax antenna                       both - none        tilted10
+  roll thorax antenna                        one - none        tilted10
+   pitch head horizon     tilted10_pitchL - flat0_pitch            both
+   pitch head horizon     tilted10_pitchR - flat0_pitch            both
+   pitch head horizon tilted10_pitchL - tilted10_pitchR            both
+   pitch head horizon     tilted10_pitchL - flat0_pitch             one
+   pitch head horizon     tilted10_pitchR - flat0_pitch             one
+   pitch head horizon tilted10_pitchL - tilted10_pitchR             one
+   pitch head horizon     tilted10_pitchL - flat0_pitch            none
+   pitch head horizon     tilted10_pitchR - flat0_pitch            none
+   pitch head horizon tilted10_pitchL - tilted10_pitchR            none
+   pitch head antenna                        both - one     flat0_pitch
+   pitch head antenna                       both - none     flat0_pitch
+   pitch head antenna                        one - none     flat0_pitch
+   pitch head antenna                        both - one tilted10_pitchL
+   pitch head antenna                       both - none tilted10_pitchL
+   pitch head antenna                        one - none tilted10_pitchL
+   pitch head antenna                        both - one tilted10_pitchR
+   pitch head antenna                       both - none tilted10_pitchR
+   pitch head antenna                        one - none tilted10_pitchR
+ pitch thorax horizon     tilted10_pitchL - flat0_pitch            both
+ pitch thorax horizon     tilted10_pitchR - flat0_pitch            both
+ pitch thorax horizon tilted10_pitchL - tilted10_pitchR            both
+ pitch thorax horizon     tilted10_pitchL - flat0_pitch             one
+ pitch thorax horizon     tilted10_pitchR - flat0_pitch             one
+ pitch thorax horizon tilted10_pitchL - tilted10_pitchR             one
+ pitch thorax horizon     tilted10_pitchL - flat0_pitch            none
+ pitch thorax horizon     tilted10_pitchR - flat0_pitch            none
+ pitch thorax horizon tilted10_pitchL - tilted10_pitchR            none
+ pitch thorax antenna                        both - one     flat0_pitch
+ pitch thorax antenna                       both - none     flat0_pitch
+ pitch thorax antenna                        one - none     flat0_pitch
+ pitch thorax antenna                        both - one tilted10_pitchL
+ pitch thorax antenna                       both - none tilted10_pitchL
+ pitch thorax antenna                        one - none tilted10_pitchL
+ pitch thorax antenna                        both - one tilted10_pitchR
+ pitch thorax antenna                       both - none tilted10_pitchR
+ pitch thorax antenna                        one - none tilted10_pitchR
+ estimate_full estimate_reduced p_holm_full p_holm_reduced same_call
+         1.076            0.839    7.09e-01       7.55e-03     FALSE
+         0.913            0.839    7.09e-01       7.55e-03     FALSE
+         0.601            0.839    8.10e-07       7.55e-03      TRUE
+         0.754            0.825    8.81e-02       1.96e-01      TRUE
+         0.868            1.161    5.82e-01       1.96e-01      TRUE
+         1.151            1.407    5.82e-01       1.18e-04     FALSE
+         0.888            0.825    5.82e-01       1.96e-01      TRUE
+         1.556            1.161    5.17e-04       1.96e-01     FALSE
+         1.751            1.407    3.34e-07       1.18e-04      TRUE
+         1.121            0.985    5.45e-01       1.00e+00      TRUE
+         1.107            0.985    5.45e-01       1.00e+00      TRUE
+         0.771            0.985    2.25e-02       1.00e+00     FALSE
+         0.911            0.920    1.00e+00       6.93e-01      TRUE
+         0.987            1.185    1.00e+00       1.64e-01      TRUE
+         1.083            1.289    1.00e+00       4.90e-03     FALSE
+         0.923            0.920    1.00e+00       6.93e-01      TRUE
+         1.434            1.185    5.06e-03       1.64e-01     FALSE
+         1.554            1.289    6.15e-05       4.90e-03      TRUE
+         0.647            0.804    5.55e-03       1.39e-02      TRUE
+         0.674            0.780    3.23e-02       3.10e-03      TRUE
+         0.961            1.031    1.00e+00       1.00e+00      TRUE
+         0.750            0.804    1.24e-01       1.39e-02     FALSE
+         0.896            0.780    9.84e-01       3.10e-03     FALSE
+         0.837            1.031    7.77e-01       1.00e+00      TRUE
+         1.020            0.804    1.00e+00       1.39e-02     FALSE
+         0.762            0.780    1.30e-01       3.10e-03     FALSE
+         1.338            1.031    1.92e-01       1.00e+00      TRUE
+         1.217            1.094    6.41e-01       1.00e+00      TRUE
+         1.211            1.059    6.41e-01       1.00e+00      TRUE
+         0.995            0.968    1.00e+00       1.00e+00      TRUE
+         1.051            1.094    1.00e+00       1.00e+00      TRUE
+         0.769            1.059    6.41e-01       1.00e+00      TRUE
+         0.732            0.968    2.96e-01       1.00e+00      TRUE
+         0.915            1.094    1.00e+00       1.00e+00      TRUE
+         1.070            1.059    1.00e+00       1.00e+00      TRUE
+         1.170            0.968    1.00e+00       1.00e+00      TRUE
+         0.877            0.850    1.00e+00       2.21e-01      TRUE
+         0.783            0.867    6.90e-01       2.42e-01      TRUE
+         1.119            0.981    1.00e+00       1.00e+00      TRUE
+         0.833            0.850    1.00e+00       2.21e-01      TRUE
+         0.898            0.867    1.00e+00       2.42e-01      TRUE
+         0.928            0.981    1.00e+00       1.00e+00      TRUE
+         0.837            0.850    1.00e+00       2.21e-01      TRUE
+         0.879            0.867    1.00e+00       2.42e-01      TRUE
+         0.952            0.981    1.00e+00       1.00e+00      TRUE
+         1.018            1.005    1.00e+00       1.00e+00      TRUE
+         0.923            0.916    1.00e+00       1.00e+00      TRUE
+         0.906            0.912    1.00e+00       1.00e+00      TRUE
+         1.071            1.005    1.00e+00       1.00e+00      TRUE
+         0.967            0.916    1.00e+00       1.00e+00      TRUE
+         0.902            0.912    1.00e+00       1.00e+00      TRUE
+         0.888            1.005    1.00e+00       1.00e+00      TRUE
+         0.823            0.916    1.00e+00       1.00e+00      TRUE
+         0.926            0.912    1.00e+00       1.00e+00      TRUE
+
+============================================================
+Q5 contrasts, full vs no three-way term
+============================================================
+3 of 27 contrasts change between significant and non-significant (Holm p < 0.05) without the interaction.
+
+      model  family      contrast           group estimate_full estimate_reduced
+  roll head horizon tilted - flat            both        -0.032           -0.057
+  roll head horizon tilted - flat             one        -0.052           -0.057
+  roll head horizon tilted - flat            none        -0.085           -0.057
+  roll head antenna    both - one           flat0        -0.058           -0.048
+  roll head antenna   both - none           flat0        -0.024            0.005
+  roll head antenna    one - none           flat0         0.034            0.052
+  roll head antenna    both - one        tilted10        -0.038           -0.048
+  roll head antenna   both - none        tilted10         0.029            0.005
+  roll head antenna    one - none        tilted10         0.067            0.052
+ pitch head horizon    low - flat            both        -0.035           -0.041
+ pitch head horizon   high - flat            both        -0.032           -0.030
+ pitch head horizon    low - high            both        -0.004           -0.011
+ pitch head horizon    low - flat             one        -0.064           -0.041
+ pitch head horizon   high - flat             one        -0.054           -0.030
+ pitch head horizon    low - high             one        -0.011           -0.011
+ pitch head horizon    low - flat            none        -0.027           -0.041
+ pitch head horizon   high - flat            none        -0.018           -0.030
+ pitch head horizon    low - high            none        -0.009           -0.011
+ pitch head antenna    both - one     flat0_pitch         0.039            0.051
+ pitch head antenna   both - none     flat0_pitch         0.036            0.031
+ pitch head antenna    one - none     flat0_pitch        -0.003           -0.021
+ pitch head antenna    both - one tilted10_pitchL         0.068            0.051
+ pitch head antenna   both - none tilted10_pitchL         0.027            0.031
+ pitch head antenna    one - none tilted10_pitchL        -0.040           -0.021
+ pitch head antenna    both - one tilted10_pitchR         0.061            0.051
+ pitch head antenna   both - none tilted10_pitchR         0.022            0.031
+ pitch head antenna    one - none tilted10_pitchR        -0.039           -0.021
+ p_holm_full p_holm_reduced same_call
+    4.18e-01       2.37e-02     FALSE
+    1.94e-01       2.37e-02     FALSE
+    8.39e-02       2.37e-02     FALSE
+    9.76e-01       6.53e-01      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       4.09e-01      TRUE
+    1.00e+00       6.53e-01      TRUE
+    1.00e+00       1.00e+00      TRUE
+    3.83e-01       4.09e-01      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE
+    1.00e+00       1.00e+00      TRUE

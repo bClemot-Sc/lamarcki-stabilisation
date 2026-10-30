@@ -1,0 +1,88 @@
+SCRIPT VERSION: v1-supplementary 
+glmmTMB version: 1.1.15.2 
+dhglm version: 2.0 
+
+============================================================
+DEFINITIONS
+============================================================
+Same data and model structures as main-analysis.R.
+Each test removes interaction term(s) from a model and compares the two fits.
+Tests are not corrected for multiple testing, read them as sensitivity checks.
+
+
+============================================================
+Q3. IS THE HORIZON x ANTENNAE INTERACTION NEEDED FOR MEAN ORIENTATION?
+============================================================
+Full: Y ~ Horizon * antennae_grp + (1 | beetle_id); additive: Y ~ Horizon + antennae_grp + (1 | beetle_id).
+Both fitted with ML and the same cell-specific residual variance. Likelihood ratio test, AIC and BIC.
+
+        model                     effect  tested_in  Chisq Df  p_value AIC_reduced
+    roll head     condition:antennae_grp full model  4.849  2 8.85e-02    2776.441
+  roll thorax     condition:antennae_grp full model  3.392  2 1.83e-01    3765.008
+   pitch head horizon_pitch:antennae_grp full model 26.125  4 2.99e-05    3043.497
+ pitch thorax horizon_pitch:antennae_grp full model 19.632  4 5.90e-04    3532.251
+ AIC_full BIC_reduced BIC_full
+ 2775.592    2821.667 2829.041
+ 3765.616    3810.186 3819.007
+ 3025.372    3105.595 3104.030
+ 3520.619    3594.478 3599.440
+
+============================================================
+Q4. IS THE HORIZON x ANTENNAE INTERACTION NEEDED FOR ANGULAR SPREAD?
+============================================================
+DHGLM scale model, full: log(phi) ~ Horizon * antennae_grp; additive: log(phi) ~ Horizon + antennae_grp.
+The interaction compares full and additive. Horizon and antennae main effects are tested in the additive model.
+Adjusted-profile LRT; a one-df test that comes out negative uses a Wald test instead.
+
+        model                     effect  full_ml reduced_ml raw_Chisq Chisq Df
+    roll head     condition:antennae_grp 2688.785   2695.483     6.697 6.697  2
+    roll head                  condition 2695.483   2700.748     5.266 5.266  1
+    roll head               antennae_grp 2695.483   2703.189     7.706 7.706  2
+  roll thorax     condition:antennae_grp 3699.095   3704.384     5.289 5.289  2
+  roll thorax                  condition 3704.384   3703.935    -0.449 0.070  1
+  roll thorax               antennae_grp 3704.384   3705.370     0.986 0.986  2
+   pitch head horizon_pitch:antennae_grp 2937.532   2943.442     5.910 5.910  4
+   pitch head              horizon_pitch 2943.442   2950.205     6.763 6.763  2
+   pitch head               antennae_grp 2943.442   2947.724     4.282 4.282  2
+ pitch thorax horizon_pitch:antennae_grp 3417.495   3419.559     2.064 2.064  4
+ pitch thorax              horizon_pitch 3419.559   3424.463     4.903 4.903  2
+ pitch thorax               antennae_grp 3419.559   3421.391     1.832 1.832  2
+  p_value caic_full caic_reduced          test_method
+ 3.51e-02  2690.619     2697.596 adjusted-profile LRT
+ 2.17e-02  2697.596     2702.366 adjusted-profile LRT
+ 2.12e-02  2697.596     2707.292 adjusted-profile LRT
+ 7.10e-02  3706.365     3710.264 adjusted-profile LRT
+ 7.92e-01  3710.264     3709.774        Wald fallback
+ 6.11e-01  3710.264     3710.199 adjusted-profile LRT
+ 2.06e-01  2908.700     2914.126 adjusted-profile LRT
+ 3.40e-02  2914.126     2924.433 adjusted-profile LRT
+ 1.18e-01  2914.126     2917.809 adjusted-profile LRT
+ 7.24e-01  3420.880     3422.023 adjusted-profile LRT
+ 8.61e-02  3422.023     3425.919 adjusted-profile LRT
+ 4.00e-01  3422.023     3423.409 adjusted-profile LRT
+
+============================================================
+Q5. ARE THE THORAX SLOPE INTERACTIONS NEEDED FOR HEAD-THORAX COUPLING?
+============================================================
+Full: head ~ thorax_dev * Horizon * antennae_grp + (1 + thorax_dev | beetle_id).
+The three-way term is tested in the full model, the other terms in the model without the three-way term.
+Both fitted with ML and the same cell-specific residual variance. Likelihood ratio test, AIC and BIC.
+
+      model                                      effect          tested_in  Chisq
+  roll head           thorax_dev:condition:antennae_grp         full model  0.974
+  roll head                        thorax_dev:condition no-three-way model  7.189
+  roll head                     thorax_dev:antennae_grp no-three-way model  3.708
+  roll head both thorax_dev interactions (common slope) no-three-way model 10.765
+ pitch head       thorax_dev:horizon_pitch:antennae_grp         full model  0.094
+ pitch head                    thorax_dev:horizon_pitch no-three-way model  0.859
+ pitch head                     thorax_dev:antennae_grp no-three-way model  0.794
+ pitch head both thorax_dev interactions (common slope) no-three-way model  1.411
+ Df  p_value AIC_reduced AIC_full BIC_reduced BIC_full
+  2 6.14e-01    2335.545 2338.571    2413.578 2424.819
+  1 7.33e-03    2340.734 2335.545    2414.661 2413.578
+  2 1.57e-01    2335.253 2335.545    2405.072 2413.578
+  3 1.31e-02    2340.310 2335.545    2406.023 2413.578
+  4 9.99e-01    2704.216 2712.122    2811.853 2836.318
+  2 6.51e-01    2701.075 2704.216    2800.432 2811.853
+  2 6.72e-01    2701.010 2704.216    2800.367 2811.853
+  4 8.42e-01    2697.626 2704.216    2788.704 2811.853

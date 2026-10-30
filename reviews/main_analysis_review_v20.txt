@@ -1,0 +1,572 @@
+SCRIPT VERSION: v20-cleaned-syntax 
+glmmTMB version: 1.1.15.2 
+dhglm version: 2.0 
+
+============================================================
+DATA AND PRIMARY ANALYSIS DEFINITIONS
+============================================================
+Rows retained: 920 
+Beetles: 41 
+Head outliers removed: 5 
+Thorax outliers removed: 3 
+Antennae factor: both / one / none (left and right pooled).
+Primary models contain no external covariates.
+Roll and pitch are analysed separately.
+Pitch horizon levels: flat / low tilt / high tilt.
+Pitch mapping: sideL = low tilt; sideR = high tilt.
+
+Q3 model formula
+Y ~ Horizon * antennae_grp + (1 | beetle_id)
+Residual dispersion is allowed to differ across Horizon x Antennae cells as a nuisance variance model.
+
+Q4 DHGLM formulas
+Location:   Y ~ Horizon * antennae_grp + (1 | beetle_id)
+Scale: log(phi) ~ Horizon * antennae_grp + (1 | beetle_id)
+Pitch uses horizon_pitch; roll uses condition.
+
+Q5 full fixed-effect structure:
+head_angle_clean ~ thorax_dev * Horizon * antennae_grp
+The terms containing thorax_dev determine the head-thorax slope.
+
+============================================================
+Q1. BASELINE HEAD-THORAX SLOPE
+============================================================
+Baseline = flat horizon + both antennae.
+Model: head_angle ~ within-beetle thorax deviation + (1 | beetle)
+Slope 1 = one-to-one movement; slope 0 = no linear coupling.
+Scientific reference = 1. Primary interval = beetle-cluster bootstrap.
+
+ rotation_plane slope    SE     df ci_low ci_high n_paired_frames n_beetles n_boot_requested n_boot_success bootstrap_se bootstrap_ci_low
+           roll 0.263 0.026 55.305  0.212   0.313              74        16             1000           1000         0.03            0.166
+          pitch 0.501 0.051 56.330  0.401   0.600              74        17             1000           1000         0.04            0.435
+ bootstrap_ci_high
+             0.286
+             0.592
+
+============================================================
+Q2. BASELINE HEAD VERSUS THORAX SD
+============================================================
+Each beetle contributes paired head and thorax SDs from matched frames.
+Test: one-sample t-test of log(head SD / thorax SD) against 0.
+SD ratio < 1 means the head varies less than the thorax.
+
+ rotation_plane n_beetles n_matched_frames head_geometric_mean_sd thorax_geometric_mean_sd sd_ratio_head_over_thorax sd_ratio_low sd_ratio_high t_value df
+           roll        13               69                  3.202                   10.142                     0.316        0.221         0.450  -7.077 12
+          pitch        11               63                  6.086                    8.745                     0.696        0.560         0.864  -3.724 10
+  p_value
+ 1.29e-05
+ 3.95e-03
+
+============================================================
+Q3. DO SENSORY CONDITIONS CHANGE AVERAGE ORIENTATION?
+============================================================
+Head and thorax are tested separately.
+Planned simple contrasts are reported regardless of the interaction p-value.
+The interaction test describes non-additivity rather than gating which contrasts are shown.
+Horizon and antenna contrast sets are separate Holm families.
+
+ROLL - HEAD MEAN
+                           Chisq Df   Pr(>Chisq)
+(Intercept)            11.416296  1 7.280268e-04
+condition              66.914261  1 2.835760e-16
+antennae_grp            1.642707  2 4.398359e-01
+condition:antennae_grp  4.729912  2 9.395343e-02
+Post-hoc mode: planned_simple_effects 
+Horizon family:
+      contrast antennae_grp estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+ tilted - flat         both    3.698 0.925 Inf    1.886    5.511          3.999 6.36e-05 1.27e-04
+ tilted - flat          one    3.321 0.978 Inf    1.404    5.238          3.395 6.86e-04 6.86e-04
+ tilted - flat         none    5.683 0.750 Inf    4.213    7.154          7.574 3.61e-14 1.08e-13
+Antenna family:
+    contrast condition estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  both - one     flat0   -0.447 1.032 Inf   -2.469    1.575         -0.433 6.65e-01 1.00e+00
+ both - none     flat0    0.208 0.927 Inf   -1.609    2.025          0.224 8.22e-01 1.00e+00
+  one - none     flat0    0.655 0.984 Inf   -1.273    2.583          0.665 5.06e-01 1.00e+00
+  both - one  tilted10   -0.069 1.018 Inf   -2.065    1.926         -0.068 9.46e-01 1.00e+00
+ both - none  tilted10   -1.777 0.840 Inf   -3.424   -0.130         -2.115 3.45e-02 2.01e-01
+  one - none  tilted10   -1.708 0.804 Inf   -3.283   -0.133         -2.125 3.36e-02 2.01e-01
+
+ROLL - THORAX MEAN
+                          Chisq Df  Pr(>Chisq)
+(Intercept)            6.218651  1 0.012641139
+condition              7.752508  1 0.005363799
+antennae_grp           2.381717  2 0.303960273
+condition:antennae_grp 3.347029  2 0.187586611
+Post-hoc mode: planned_simple_effects 
+Horizon family:
+      contrast antennae_grp estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+ tilted - flat         both    5.691 2.919 Inf   -0.030   11.412          1.950 5.12e-02 1.02e-01
+ tilted - flat          one    0.395 2.812 Inf   -5.115    5.906          0.141 8.88e-01 8.88e-01
+ tilted - flat         none    6.792 2.223 Inf    2.436   11.149          3.056 2.24e-03 6.73e-03
+Antenna family:
+    contrast condition estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  both - one     flat0   -2.514 2.914 Inf   -8.226    3.198         -0.863 3.88e-01 1.00e+00
+ both - none     flat0   -1.781 2.712 Inf   -7.097    3.534         -0.657 5.11e-01 1.00e+00
+  one - none     flat0    0.733 2.685 Inf   -4.529    5.995          0.273 7.85e-01 1.00e+00
+  both - one  tilted10    2.781 3.111 Inf   -3.316    8.878          0.894 3.71e-01 1.00e+00
+ both - none  tilted10   -2.883 2.666 Inf   -8.108    2.342         -1.082 2.79e-01 1.00e+00
+  one - none  tilted10   -5.664 2.495 Inf  -10.555   -0.774         -2.270 2.32e-02 1.39e-01
+
+PITCH - HEAD MEAN
+                              Chisq Df   Pr(>Chisq)
+(Intercept)                97.55975  1 5.225544e-23
+horizon_pitch              71.52013  2 2.948503e-16
+antennae_grp               53.61149  2 2.282512e-12
+horizon_pitch:antennae_grp 35.19506  4 4.235885e-07
+Post-hoc mode: planned_simple_effects 
+Horizon family:
+    contrast antennae_grp estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  low - flat         both   -2.672 1.165 Inf   -4.955   -0.389         -2.294 2.18e-02 8.71e-02
+ high - flat         both   -1.852 1.315 Inf   -4.429    0.724         -1.409 1.59e-01 3.18e-01
+  low - high         both   -0.820 1.256 Inf   -3.282    1.642         -0.653 5.14e-01 5.14e-01
+  low - flat          one   -2.225 1.067 Inf   -4.317   -0.133         -2.085 3.71e-02 1.11e-01
+ high - flat          one    4.925 1.159 Inf    2.653    7.197          4.249 2.15e-05 1.13e-04
+  low - high          one   -7.150 1.259 Inf   -9.617   -4.684         -5.681 1.34e-08 1.07e-07
+  low - flat         none   -5.610 1.311 Inf   -8.179   -3.040         -4.279 1.88e-05 1.13e-04
+ high - flat         none    5.298 1.141 Inf    3.062    7.533          4.645 3.40e-06 2.38e-05
+  low - high         none  -10.907 1.358 Inf  -13.570   -8.245         -8.029 9.81e-16 8.83e-15
+Antenna family:
+    contrast   horizon_pitch estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  both - one     flat0_pitch   -3.069 1.387 Inf   -5.787   -0.351         -2.213 2.69e-02 8.06e-02
+ both - none     flat0_pitch   -6.170 1.357 Inf   -8.831   -3.510         -4.546 5.48e-06 3.84e-05
+  one - none     flat0_pitch   -3.101 1.078 Inf   -5.214   -0.988         -2.877 4.02e-03 2.41e-02
+  both - one tilted10_pitchL   -3.516 1.362 Inf   -6.185   -0.847         -2.582 9.82e-03 4.91e-02
+ both - none tilted10_pitchL   -3.233 1.483 Inf   -6.140   -0.326         -2.180 2.93e-02 8.06e-02
+  one - none tilted10_pitchL    0.283 1.368 Inf   -2.398    2.965          0.207 8.36e-01 8.36e-01
+  both - one tilted10_pitchR   -9.846 1.663 Inf  -13.107   -6.586         -5.919 3.23e-09 2.59e-08
+ both - none tilted10_pitchR  -13.320 1.551 Inf  -16.361  -10.280         -8.587 8.96e-18 8.06e-17
+  one - none tilted10_pitchR   -3.474 1.362 Inf   -6.143   -0.805         -2.552 1.07e-02 4.91e-02
+
+PITCH - THORAX MEAN
+                              Chisq Df   Pr(>Chisq)
+(Intercept)                86.50452  1 1.394180e-20
+horizon_pitch              14.23223  2 8.119130e-04
+antennae_grp               48.91432  2 2.389959e-11
+horizon_pitch:antennae_grp 22.30836  4 1.739911e-04
+Post-hoc mode: planned_simple_effects 
+Horizon family:
+    contrast antennae_grp estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  low - flat         both    0.243 1.965 Inf   -3.608    4.094          0.124 9.01e-01 9.01e-01
+ high - flat         both   -3.032 2.256 Inf   -7.454    1.389         -1.344 1.79e-01 6.95e-01
+  low - high         both    3.276 2.438 Inf   -1.502    8.054          1.344 1.79e-01 6.95e-01
+  low - flat          one   -2.528 1.858 Inf   -6.169    1.113         -1.361 1.74e-01 6.95e-01
+ high - flat          one    3.011 1.892 Inf   -0.696    6.718          1.592 1.11e-01 5.57e-01
+  low - high          one   -5.539 2.110 Inf   -9.675   -1.402         -2.624 8.68e-03 6.08e-02
+  low - flat         none   -5.661 2.191 Inf   -9.955   -1.367         -2.584 9.77e-03 6.08e-02
+ high - flat         none    7.069 1.990 Inf    3.169   10.970          3.552 3.82e-04 3.05e-03
+  low - high         none  -12.731 2.388 Inf  -17.411   -8.050         -5.331 9.74e-08 8.77e-07
+Antenna family:
+    contrast   horizon_pitch estimate    SE  df lower.CL upper.CL test_statistic    p_raw   p_holm
+  both - one     flat0_pitch   -6.306 2.009 Inf  -10.243   -2.369         -3.139 1.69e-03 8.47e-03
+ both - none     flat0_pitch   -9.518 1.987 Inf  -13.414   -5.623         -4.789 1.67e-06 1.34e-05
+  one - none     flat0_pitch   -3.212 1.756 Inf   -6.654    0.229         -1.830 6.73e-02 2.69e-01
+  both - one tilted10_pitchL   -3.535 2.319 Inf   -8.081    1.011         -1.524 1.27e-01 3.82e-01
+ both - none tilted10_pitchL   -3.614 2.515 Inf   -8.544    1.316         -1.437 1.51e-01 3.82e-01
+  one - none tilted10_pitchL   -0.079 2.359 Inf   -4.702    4.544         -0.033 9.73e-01 9.73e-01
+  both - one tilted10_pitchR  -12.349 2.670 Inf  -17.582   -7.116         -4.625 3.74e-06 2.62e-05
+ both - none tilted10_pitchR  -19.620 2.643 Inf  -24.801  -14.439         -7.422 1.15e-13 1.04e-12
+  one - none tilted10_pitchR   -7.271 2.270 Inf  -11.719   -2.823         -3.204 1.36e-03 8.14e-03
+
+Q3 MODEL-ESTIMATED MEANS
+Roll:
+ condition antennae_grp emmean    SE  df asymp.LCL asymp.UCL z.ratio p.value lower.CL upper.CL segment rotation_plane
+     flat0         both -1.107 0.693 Inf    -2.466     0.251  -1.598   0.110   -2.466    0.251    head           roll
+  tilted10         both  2.591 0.739 Inf     1.142     4.039   3.506   0.000    1.142    4.039    head           roll
+     flat0          one -0.661 0.768 Inf    -2.166     0.844  -0.861   0.389   -2.166    0.844    head           roll
+  tilted10          one  2.660 0.716 Inf     1.257     4.062   3.717   0.000    1.257    4.062    head           roll
+     flat0         none -1.315 0.664 Inf    -2.616    -0.014  -1.982   0.048   -2.616   -0.014    head           roll
+  tilted10         none  4.368 0.465 Inf     3.456     5.280   9.385   0.000    3.456    5.280    head           roll
+     flat0         both -1.349 2.070 Inf    -5.406     2.708  -0.652   0.515   -5.406    2.708  thorax           roll
+  tilted10         both  4.342 2.294 Inf    -0.154     8.838   1.893   0.058   -0.154    8.838  thorax           roll
+     flat0          one  1.165 2.053 Inf    -2.858     5.189   0.568   0.570   -2.858    5.189  thorax           roll
+  tilted10          one  1.561 2.117 Inf    -2.588     5.710   0.737   0.461   -2.588    5.710  thorax           roll
+     flat0         none  0.432 1.827 Inf    -3.149     4.014   0.237   0.813   -3.149    4.014  thorax           roll
+  tilted10         none  7.225 1.461 Inf     4.361    10.089   4.944   0.000    4.361   10.089  thorax           roll
+
+Pitch:
+   horizon_pitch antennae_grp  emmean    SE  df asymp.LCL asymp.UCL z.ratio p.value lower.CL upper.CL segment rotation_plane
+     flat0_pitch         both   4.702 1.205 Inf     2.341     7.063   3.903   0.000    2.341    7.063    head          pitch
+ tilted10_pitchL         both   2.030 1.152 Inf    -0.227     4.288   1.762   0.078   -0.227    4.288    head          pitch
+ tilted10_pitchR         both   2.850 1.301 Inf     0.299     5.400   2.190   0.029    0.299    5.400    head          pitch
+     flat0_pitch          one   7.771 1.052 Inf     5.710     9.833   7.389   0.000    5.710    9.833    head          pitch
+ tilted10_pitchL          one   5.546 1.152 Inf     3.287     7.805   4.812   0.000    3.287    7.805    head          pitch
+ tilted10_pitchR          one  12.696 1.242 Inf    10.263    15.130  10.226   0.000   10.263   15.130    head          pitch
+     flat0_pitch         none  10.873 1.084 Inf     8.747    12.998  10.028   0.000    8.747   12.998    head          pitch
+ tilted10_pitchL         none   5.263 1.319 Inf     2.678     7.848   3.991   0.000    2.678    7.848    head          pitch
+ tilted10_pitchR         none  16.170 1.158 Inf    13.900    18.441  13.960   0.000   13.900   18.441    head          pitch
+     flat0_pitch         both -13.496 1.566 Inf   -16.565   -10.427  -8.619   0.000  -16.565  -10.427  thorax          pitch
+ tilted10_pitchL         both -13.253 1.796 Inf   -16.772    -9.734  -7.381   0.000  -16.772   -9.734  thorax          pitch
+ tilted10_pitchR         both -16.529 2.072 Inf   -20.590   -12.467  -7.976   0.000  -20.590  -12.467  thorax          pitch
+     flat0_pitch          one  -7.190 1.457 Inf   -10.046    -4.335  -4.936   0.000  -10.046   -4.335  thorax          pitch
+ tilted10_pitchL          one  -9.718 1.720 Inf   -13.089    -6.346  -5.649   0.000  -13.089   -6.346  thorax          pitch
+ tilted10_pitchR          one  -4.179 1.743 Inf    -7.596    -0.762  -2.397   0.017   -7.596   -0.762  thorax          pitch
+     flat0_pitch         none  -3.978 1.501 Inf    -6.919    -1.037  -2.651   0.008   -6.919   -1.037  thorax          pitch
+ tilted10_pitchL         none  -9.639 2.003 Inf   -13.565    -5.713  -4.812   0.000  -13.565   -5.713  thorax          pitch
+ tilted10_pitchR         none   3.091 1.781 Inf    -0.400     6.583   1.735   0.083   -0.400    6.583  thorax          pitch
+
+============================================================
+Q4. DO SENSORY CONDITIONS CHANGE ANGULAR SPREAD?
+============================================================
+DHGLM: beetle random intercepts are fitted in both location and scale.
+Location: Y ~ Horizon * Antennae + (1 | beetle)
+Full scale: log(phi) ~ Horizon * Antennae + (1 | beetle)
+The interaction compares the full and additive scale models and describes non-additivity.
+If interaction is unsupported, additive-model horizon and antenna omnibus effects are also reported.
+Planned simple-effect Wald contrasts are always estimated from the full cell model.
+Horizon and antenna contrast sets are Holm-corrected as separate families.
+SD ratios are exp(log-variance contrast / 2).
+Adjusted-profile LRTs are retained for multi-df omnibus tests; one-df non-monotonic comparisons use a Wald fallback.
+
+
+ROLL - HEAD SPREAD
+Post-hoc mode: planned_simple_effects 
+Scale-model omnibus tests:
+                 effect  full_ml reduced_ml raw_Chisq Chisq lrt_clipped Df  p_value          test_method
+ condition:antennae_grp 2688.785   2695.483     6.697 6.697       FALSE  2 3.51e-02 adjusted-profile LRT
+Cell-specific population residual SD estimates:
+ condition antennae_grp       cell_key log_variance log_variance_se residual_sd sd_low sd_high
+     flat0         both    flat0__both        2.928           0.185       4.324  3.605   5.186
+     flat0          one     flat0__one        3.493           0.181       5.735  4.801   6.851
+     flat0         none    flat0__none        3.211           0.171       4.981  4.211   5.892
+  tilted10         both tilted10__both        3.076           0.190       4.655  3.863   5.608
+  tilted10          one  tilted10__one        3.312           0.168       5.239  4.444   6.176
+  tilted10         none tilted10__none        2.192           0.169       2.992  2.534   3.532
+Horizon family:
+                           contrast  family estimate    SE    z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+ tilted10 - flat0 | antennae = both horizon    0.147 0.209  0.7033696    1.076        0.877         1.322 4.82e-01        Wald 7.09e-01
+  tilted10 - flat0 | antennae = one horizon   -0.181 0.196 -0.9256436    0.913        0.754         1.106 3.55e-01        Wald 7.09e-01
+ tilted10 - flat0 | antennae = none horizon   -1.019 0.198 -5.1432801    0.601        0.495         0.729 2.70e-07        Wald 8.10e-07
+Antenna family:
+                         contrast  family estimate    SE   z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+     both - one | horizon = flat0 antenna   -0.565 0.247 -2.289985    0.754        0.592         0.960 2.20e-02        Wald 8.81e-02
+    both - none | horizon = flat0 antenna   -0.283 0.230 -1.228062    0.868        0.693         1.088 2.19e-01        Wald 5.82e-01
+     one - none | horizon = flat0 antenna    0.282 0.217  1.298708    1.151        0.931         1.424 1.94e-01        Wald 5.82e-01
+  both - one | horizon = tilted10 antenna   -0.237 0.236 -1.004115    0.888        0.705         1.119 3.15e-01        Wald 5.82e-01
+ both - none | horizon = tilted10 antenna    0.884 0.228  3.882335    1.556        1.245         1.945 1.03e-04        Wald 5.17e-04
+  one - none | horizon = tilted10 antenna    1.120 0.206  5.432054    1.751        1.431         2.143 5.57e-08        Wald 3.34e-07
+Scale random-effect variance model (estimate and SE only; no zero-variance test):
+           Estimate Std. Error
+beetle_id -1.358825  0.2754435
+DHGLM fit / likelihood diagnostics:
+          model fit_returned finite_ml finite_coefficients finite_scale_random_effect       ml       rl     caic
+     full scale         TRUE      TRUE                TRUE                       TRUE 2688.785 2692.314 2690.619
+ additive scale         TRUE      TRUE                TRUE                       TRUE 2695.483 2698.993 2697.596
+Negative raw omnibus LRT differences: 0 
+Negative raw post-hoc LRT differences: 0 
+
+ROLL - THORAX SPREAD
+Post-hoc mode: planned_simple_effects_plus_additive_omnibus 
+Scale-model omnibus tests:
+                 effect  full_ml reduced_ml raw_Chisq Chisq lrt_clipped Df  p_value          test_method
+ condition:antennae_grp 3699.095   3704.384     5.289 5.289       FALSE  2 7.10e-02 adjusted-profile LRT
+              condition 3704.384   3703.935    -0.449 0.070       FALSE  1 7.92e-01        Wald fallback
+           antennae_grp 3704.384   3705.370     0.986 0.986       FALSE  2 6.11e-01 adjusted-profile LRT
+Cell-specific population residual SD estimates:
+ condition antennae_grp       cell_key log_variance log_variance_se residual_sd sd_low sd_high
+     flat0         both    flat0__both        5.292           0.168      14.098 11.955  16.624
+     flat0          one     flat0__one        5.478           0.166      15.468 13.151  18.194
+     flat0         none    flat0__none        5.319           0.157      14.289 12.251  16.666
+  tilted10         both tilted10__both        5.520           0.176      15.801 13.294  18.781
+  tilted10          one  tilted10__one        5.680           0.154      17.119 14.726  19.900
+  tilted10         none tilted10__none        4.799           0.155      11.015  9.467  12.817
+Horizon family:
+                           contrast  family estimate    SE   z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+ tilted10 - flat0 | antennae = both horizon    0.228 0.208  1.097745    1.121        0.914         1.374 2.72e-01        Wald 5.45e-01
+  tilted10 - flat0 | antennae = one horizon    0.203 0.194  1.046058    1.107        0.915         1.338 2.96e-01        Wald 5.45e-01
+ tilted10 - flat0 | antennae = none horizon   -0.520 0.195 -2.673134    0.771        0.637         0.933 7.51e-03        Wald 2.25e-02
+Antenna family:
+                         contrast  family estimate    SE    z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+     both - one | horizon = flat0 antenna   -0.186 0.230 -0.8051048    0.911        0.727         1.142 4.21e-01        Wald 1.00e+00
+    both - none | horizon = flat0 antenna   -0.027 0.219 -0.1230877    0.987        0.796         1.222 9.02e-01        Wald 1.00e+00
+     one - none | horizon = flat0 antenna    0.159 0.210  0.7561315    1.083        0.881         1.330 4.50e-01        Wald 1.00e+00
+  both - one | horizon = tilted10 antenna   -0.160 0.225 -0.7123737    0.923        0.740         1.151 4.76e-01        Wald 1.00e+00
+ both - none | horizon = tilted10 antenna    0.722 0.220  3.2868912    1.434        1.157         1.779 1.01e-03        Wald 5.06e-03
+  one - none | horizon = tilted10 antenna    0.882 0.200  4.4118504    1.554        1.278         1.890 1.02e-05        Wald 6.15e-05
+Scale random-effect variance model (estimate and SE only; no zero-variance test):
+           Estimate Std. Error
+beetle_id -1.924448  0.4837211
+DHGLM fit / likelihood diagnostics:
+          model fit_returned finite_ml finite_coefficients finite_scale_random_effect       ml       rl     caic
+     full scale         TRUE      TRUE                TRUE                       TRUE 3699.095 3689.259 3706.365
+ additive scale         TRUE      TRUE                TRUE                       TRUE 3704.384 3694.341 3710.264
+Negative raw omnibus LRT differences: 0 
+Negative raw post-hoc LRT differences: 0 
+
+PITCH - HEAD SPREAD
+Post-hoc mode: planned_simple_effects_plus_additive_omnibus 
+Scale-model omnibus tests:
+                     effect  full_ml reduced_ml raw_Chisq Chisq lrt_clipped Df  p_value          test_method
+ horizon_pitch:antennae_grp 2937.532   2943.442     5.910 5.910       FALSE  4 2.06e-01 adjusted-profile LRT
+              horizon_pitch 2943.442   2950.205     6.763 6.763       FALSE  2 3.40e-02 adjusted-profile LRT
+               antennae_grp 2943.442   2947.724     4.282 4.282       FALSE  2 1.18e-01 adjusted-profile LRT
+Cell-specific population residual SD estimates:
+   horizon_pitch antennae_grp              cell_key log_variance log_variance_se residual_sd sd_low sd_high
+     flat0_pitch         both     flat0_pitch__both        3.817           0.171       6.742  5.700   7.975
+     flat0_pitch          one      flat0_pitch__one        3.424           0.158       5.540  4.747   6.466
+     flat0_pitch         none     flat0_pitch__none        3.433           0.159       5.566  4.765   6.502
+ tilted10_pitchL         both tilted10_pitchL__both        2.947           0.226       4.365  3.497   5.449
+ tilted10_pitchL          one  tilted10_pitchL__one        2.849           0.222       4.155  3.344   5.162
+ tilted10_pitchL         none tilted10_pitchL__none        3.473           0.222       5.678  4.569   7.055
+ tilted10_pitchR         both tilted10_pitchR__both        3.027           0.247       4.542  3.565   5.787
+ tilted10_pitchR          one  tilted10_pitchR__one        3.205           0.200       4.964  4.082   6.037
+ tilted10_pitchR         none tilted10_pitchR__none        2.891           0.209       4.243  3.457   5.208
+Horizon family:
+                                            contrast  family estimate    SE    z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+     tilted10_pitchL - flat0_pitch | antennae = both horizon   -0.869 0.254 -3.4240086    0.647        0.505         0.830 6.17e-04        Wald 5.55e-03
+     tilted10_pitchR - flat0_pitch | antennae = both horizon   -0.790 0.275 -2.8752519    0.674        0.515         0.882 4.04e-03        Wald 3.23e-02
+ tilted10_pitchL - tilted10_pitchR | antennae = both horizon   -0.079 0.309 -0.2568454    0.961        0.710         1.301 7.97e-01        Wald 1.00e+00
+      tilted10_pitchL - flat0_pitch | antennae = one horizon   -0.575 0.243 -2.3716103    0.750        0.591         0.951 1.77e-02        Wald 1.24e-01
+      tilted10_pitchR - flat0_pitch | antennae = one horizon   -0.219 0.224 -0.9779184    0.896        0.719         1.117 3.28e-01        Wald 9.84e-01
+  tilted10_pitchL - tilted10_pitchR | antennae = one horizon   -0.356 0.274 -1.2980508    0.837        0.640         1.095 1.94e-01        Wald 7.77e-01
+     tilted10_pitchL - flat0_pitch | antennae = none horizon    0.040 0.247  0.1608712    1.020        0.801         1.299 8.72e-01        Wald 1.00e+00
+     tilted10_pitchR - flat0_pitch | antennae = none horizon   -0.543 0.236 -2.2974064    0.762        0.605         0.961 2.16e-02        Wald 1.30e-01
+ tilted10_pitchL - tilted10_pitchR | antennae = none horizon    0.583 0.281  2.0711928    1.338        1.016         1.763 3.83e-02        Wald 1.92e-01
+Antenna family:
+                                contrast  family estimate    SE     z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+      both - one | horizon = flat0_pitch antenna    0.393 0.224  1.74977718    1.217        0.977         1.516 8.02e-02        Wald 6.41e-01
+     both - none | horizon = flat0_pitch antenna    0.383 0.221  1.73807782    1.211        0.976         1.503 8.22e-02        Wald 6.41e-01
+      one - none | horizon = flat0_pitch antenna   -0.009 0.197 -0.04768869    0.995        0.821         1.207 9.62e-01        Wald 1.00e+00
+  both - one | horizon = tilted10_pitchL antenna    0.099 0.307  0.32166969    1.051        0.778         1.420 7.48e-01        Wald 1.00e+00
+ both - none | horizon = tilted10_pitchL antenna   -0.526 0.306 -1.71950481    0.769        0.570         1.037 8.55e-02        Wald 6.41e-01
+  one - none | horizon = tilted10_pitchL antenna   -0.625 0.293 -2.13332146    0.732        0.549         0.975 3.29e-02        Wald 2.96e-01
+  both - one | horizon = tilted10_pitchR antenna   -0.178 0.313 -0.56842688    0.915        0.673         1.243 5.70e-01        Wald 1.00e+00
+ both - none | horizon = tilted10_pitchR antenna    0.136 0.317  0.42907874    1.070        0.784         1.461 6.68e-01        Wald 1.00e+00
+  one - none | horizon = tilted10_pitchR antenna    0.314 0.274  1.14402512    1.170        0.894         1.531 2.53e-01        Wald 1.00e+00
+Scale random-effect variance model (estimate and SE only; no zero-variance test):
+           Estimate Std. Error
+beetle_id -1.730948  0.3933665
+DHGLM fit / likelihood diagnostics:
+          model fit_returned finite_ml finite_coefficients finite_scale_random_effect       ml       rl     caic
+     full scale         TRUE      TRUE                TRUE                       TRUE 2937.532 2935.245 2908.700
+ additive scale         TRUE      TRUE                TRUE                       TRUE 2943.442 2940.995 2914.126
+Negative raw omnibus LRT differences: 0 
+Negative raw post-hoc LRT differences: 0 
+
+PITCH - THORAX SPREAD
+Post-hoc mode: planned_simple_effects_plus_additive_omnibus 
+Scale-model omnibus tests:
+                     effect  full_ml reduced_ml raw_Chisq Chisq lrt_clipped Df  p_value          test_method
+ horizon_pitch:antennae_grp 3417.495   3419.559     2.064 2.064       FALSE  4 7.24e-01 adjusted-profile LRT
+              horizon_pitch 3419.559   3424.463     4.903 4.903       FALSE  2 8.61e-02 adjusted-profile LRT
+               antennae_grp 3419.559   3421.391     1.832 1.832       FALSE  2 4.00e-01 adjusted-profile LRT
+Cell-specific population residual SD estimates:
+   horizon_pitch antennae_grp              cell_key log_variance log_variance_se residual_sd sd_low sd_high
+     flat0_pitch         both     flat0_pitch__both        4.548           0.179       9.717  8.154  11.579
+     flat0_pitch          one      flat0_pitch__one        4.511           0.164       9.542  8.122  11.210
+     flat0_pitch         none     flat0_pitch__none        4.708           0.165      10.530  8.955  12.382
+ tilted10_pitchL         both tilted10_pitchL__both        4.284           0.233       8.517  6.780  10.700
+ tilted10_pitchL          one  tilted10_pitchL__one        4.146           0.227       7.950  6.364   9.931
+ tilted10_pitchL         none tilted10_pitchL__none        4.352           0.227       8.809  7.051  11.007
+ tilted10_pitchR         both tilted10_pitchR__both        4.059           0.251       7.609  5.950   9.731
+ tilted10_pitchR          one  tilted10_pitchR__one        4.295           0.205       8.564  7.007  10.468
+ tilted10_pitchR         none tilted10_pitchR__none        4.450           0.211       9.252  7.521  11.381
+Horizon family:
+                                            contrast  family estimate    SE    z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+     tilted10_pitchL - flat0_pitch | antennae = both horizon   -0.264 0.257 -1.0249699    0.877        0.681         1.128 3.05e-01        Wald 1.00e+00
+     tilted10_pitchR - flat0_pitch | antennae = both horizon   -0.489 0.276 -1.7702849    0.783        0.597         1.027 7.67e-02        Wald 6.90e-01
+ tilted10_pitchL - tilted10_pitchR | antennae = both horizon    0.225 0.311  0.7257902    1.119        0.826         1.518 4.68e-01        Wald 1.00e+00
+      tilted10_pitchL - flat0_pitch | antennae = one horizon   -0.365 0.245 -1.4911580    0.833        0.655         1.059 1.36e-01        Wald 1.00e+00
+      tilted10_pitchR - flat0_pitch | antennae = one horizon   -0.216 0.226 -0.9552145    0.898        0.719         1.120 3.39e-01        Wald 1.00e+00
+  tilted10_pitchL - tilted10_pitchR | antennae = one horizon   -0.149 0.277 -0.5379863    0.928        0.708         1.217 5.91e-01        Wald 1.00e+00
+     tilted10_pitchL - flat0_pitch | antennae = none horizon   -0.357 0.250 -1.4293759    0.837        0.655         1.068 1.53e-01        Wald 1.00e+00
+     tilted10_pitchR - flat0_pitch | antennae = none horizon   -0.259 0.237 -1.0928308    0.879        0.697         1.108 2.74e-01        Wald 1.00e+00
+ tilted10_pitchL - tilted10_pitchR | antennae = none horizon   -0.098 0.282 -0.3476159    0.952        0.722         1.255 7.28e-01        Wald 1.00e+00
+Antenna family:
+                                contrast  family estimate    SE    z_value sd_ratio sd_ratio_low sd_ratio_high    p_raw test_method   p_holm
+      both - one | horizon = flat0_pitch antenna    0.036 0.231  0.1569197    1.018        0.812         1.278 8.75e-01        Wald 1.00e+00
+     both - none | horizon = flat0_pitch antenna   -0.161 0.227 -0.7089673    0.923        0.739         1.152 4.78e-01        Wald 1.00e+00
+      one - none | horizon = flat0_pitch antenna   -0.197 0.200 -0.9837935    0.906        0.745         1.103 3.25e-01        Wald 1.00e+00
+  both - one | horizon = tilted10_pitchL antenna    0.138 0.313  0.4406407    1.071        0.789         1.456 6.59e-01        Wald 1.00e+00
+ both - none | horizon = tilted10_pitchL antenna   -0.067 0.311 -0.2167822    0.967        0.713         1.311 8.28e-01        Wald 1.00e+00
+  one - none | horizon = tilted10_pitchL antenna   -0.205 0.296 -0.6935296    0.902        0.675         1.206 4.88e-01        Wald 1.00e+00
+  both - one | horizon = tilted10_pitchR antenna   -0.236 0.317 -0.7453069    0.888        0.651         1.213 4.56e-01        Wald 1.00e+00
+ both - none | horizon = tilted10_pitchR antenna   -0.391 0.319 -1.2252573    0.823        0.602         1.124 2.20e-01        Wald 1.00e+00
+  one - none | horizon = tilted10_pitchR antenna   -0.154 0.276 -0.5598608    0.926        0.707         1.213 5.76e-01        Wald 1.00e+00
+Scale random-effect variance model (estimate and SE only; no zero-variance test):
+           Estimate Std. Error
+beetle_id -1.423666  0.2900619
+DHGLM fit / likelihood diagnostics:
+          model fit_returned finite_ml finite_coefficients finite_scale_random_effect       ml       rl     caic
+     full scale         TRUE      TRUE                TRUE                       TRUE 3417.495 3407.777 3420.880
+ additive scale         TRUE      TRUE                TRUE                       TRUE 3419.559 3409.780 3422.023
+Negative raw omnibus LRT differences: 0 
+Negative raw post-hoc LRT differences: 0 
+
+============================================================
+Q5. DO SENSORY CONDITIONS CHANGE THE HEAD-THORAX SLOPE?
+============================================================
+Full crossed model: head ~ thorax_dev * Horizon * Antennae.
+The three-way thorax_dev:Horizon:Antennae term tests whether the effect
+of one sensory modality on coupling depends on the other modality.
+Cell-specific slopes are reported for every crossed sensory combination.
+Slope post-hocs are grouped into two Holm families:
+  1) horizon slope contrasts within antenna conditions;
+  2) antenna slope contrasts within horizon conditions.
+
+Q5 random-effect structure: correlated random intercept + random thorax_dev slope.
+
+Q5 conditional head residual SD is also reported descriptively from the existing dispersion model.
+This is residual head variation after accounting for thorax coupling, not a replacement for Q4.
+
+ROLL - TYPE III TESTS
+                                        Chisq Df   Pr(>Chisq)
+(Intercept)                         9.2487570  1 2.356553e-03
+thorax_dev                        229.8531128  1 6.417654e-52
+condition                         101.1734161  1 8.427279e-24
+antennae_grp                        1.8729465  2 3.920079e-01
+thorax_dev:condition                6.7725791  1 9.256897e-03
+thorax_dev:antennae_grp             3.3323333  2 1.889701e-01
+condition:antennae_grp              2.8642778  2 2.387976e-01
+thorax_dev:condition:antennae_grp   0.9675948  2 6.164381e-01
+
+ROLL - CELL-SPECIFIC HEAD-THORAX SLOPES
+ condition antennae_grp thorax_dev.trend         SE  df asymp.LCL asymp.UCL   z.ratio      p.value  lower.CL  upper.CL
+     flat0         both        0.2462553 0.03508883 Inf 0.1774825 0.3150282  7.018055 2.249781e-12 0.1774825 0.3150282
+  tilted10         both        0.2137677 0.03181814 Inf 0.1514053 0.2761301  6.718422 1.837025e-11 0.1514053 0.2761301
+     flat0          one        0.3044553 0.02886057 Inf 0.2478896 0.3610210 10.549179 5.124286e-26 0.2478896 0.3610210
+  tilted10          one        0.2520255 0.02697733 Inf 0.1991509 0.3049001  9.342124 9.442055e-21 0.1991509 0.3049001
+     flat0         none        0.2706137 0.03113182 Inf 0.2095965 0.3316309  8.692512 3.545121e-18 0.2095965 0.3316309
+  tilted10         none        0.1851489 0.02932648 Inf 0.1276701 0.2426278  6.313371 2.730211e-10 0.1276701 0.2426278
+
+ROLL - CONDITIONAL HEAD RESIDUAL SD (DESCRIPTIVE)
+ condition antennae_grp residual_sd sd_low sd_high
+     flat0         both       1.747  1.600   1.907
+  tilted10         both       1.714  1.501   1.958
+     flat0          one       1.687  1.533   1.857
+  tilted10          one       1.670  1.520   1.835
+     flat0         none       1.757  1.598   1.931
+  tilted10         none       1.511  1.380   1.654
+
+ROLL - HORIZON SLOPE FAMILY, HOLM
+      contrast antennae_grp    estimate         SE  df  asymp.LCL    asymp.UCL   z.ratio    p.value     p_holm
+ tilted - flat         both -0.03248763 0.04008829 Inf -0.1110592  0.046083975 -0.810402 0.41770915 0.41770915
+ tilted - flat          one -0.05242978 0.03160506 Inf -0.1143746  0.009514999 -1.658905 0.09713501 0.19427003
+ tilted - flat         none -0.08546475 0.03888364 Inf -0.1616753 -0.009254214 -2.197962 0.02795184 0.08385553
+
+ROLL - ANTENNA SLOPE FAMILY, HOLM
+    contrast condition    estimate         SE  df    asymp.LCL  asymp.UCL    z.ratio    p.value    p_holm
+  both - one     flat0 -0.05819997 0.04492997 Inf -0.146261090 0.02986114 -1.2953487 0.19519995 0.9759998
+ both - none     flat0 -0.02435836 0.04326744 Inf -0.109160973 0.06044426 -0.5629721 0.57345390 1.0000000
+  one - none     flat0  0.03384162 0.04017580 Inf -0.044901509 0.11258474  0.8423383 0.39959862 1.0000000
+  both - one  tilted10 -0.03825783 0.04083572 Inf -0.118294362 0.04177871 -0.9368717 0.34882456 1.0000000
+ both - none  tilted10  0.02861876 0.03960476 Inf -0.049005146 0.10624268  0.7226091 0.46992005 1.0000000
+  one - none  tilted10  0.06687659 0.03607487 Inf -0.003828858 0.13758204  1.8538275 0.06376384 0.3825830
+
+PITCH - TYPE III TESTS
+                                            Chisq Df   Pr(>Chisq)
+(Intercept)                           122.2732264  1 2.011401e-28
+thorax_dev                            170.8167850  1 4.906535e-39
+horizon_pitch                          61.7329602  2 3.934214e-14
+antennae_grp                           16.8218416  2 2.224250e-04
+thorax_dev:horizon_pitch                0.7545249  2 6.857361e-01
+thorax_dev:antennae_grp                 0.6197297  2 7.335461e-01
+horizon_pitch:antennae_grp              6.8870865  4 1.419769e-01
+thorax_dev:horizon_pitch:antennae_grp   0.1173523  4 9.983444e-01
+
+PITCH - CELL-SPECIFIC HEAD-THORAX SLOPES
+   horizon_pitch antennae_grp thorax_dev.trend         SE  df asymp.LCL asymp.UCL  z.ratio      p.value  lower.CL  upper.CL
+     flat0_pitch         both        0.4866612 0.06428282 Inf 0.3606692 0.6126532 7.570626 3.714303e-14 0.3606692 0.6126532
+ tilted10_pitchL         both        0.4512200 0.06339763 Inf 0.3269630 0.5754771 7.117302 1.100604e-12 0.3269630 0.5754771
+ tilted10_pitchR         both        0.4548265 0.11923803 Inf 0.2211243 0.6885287 3.814442 1.364912e-04 0.2211243 0.6885287
+     flat0_pitch          one        0.4477512 0.05905736 Inf 0.3320009 0.5635014 7.581632 3.412343e-14 0.3320009 0.5635014
+ tilted10_pitchL          one        0.3834006 0.09255026 Inf 0.2020055 0.5647958 4.142621 3.433595e-05 0.2020055 0.5647958
+ tilted10_pitchR          one        0.3940685 0.10530778 Inf 0.1876691 0.6004680 3.742065 1.825145e-04 0.1876691 0.6004680
+     flat0_pitch         none        0.4510284 0.05198519 Inf 0.3491393 0.5529175 8.676095 4.095914e-18 0.3491393 0.5529175
+ tilted10_pitchL         none        0.4238792 0.07580809 Inf 0.2752980 0.5724603 5.591476 2.251469e-08 0.2752980 0.5724603
+ tilted10_pitchR         none        0.4329564 0.07037458 Inf 0.2950248 0.5708880 6.152170 7.642968e-10 0.2950248 0.5708880
+
+PITCH - CONDITIONAL HEAD RESIDUAL SD (DESCRIPTIVE)
+   horizon_pitch antennae_grp residual_sd sd_low sd_high
+     flat0_pitch         both       2.104  1.911   2.317
+ tilted10_pitchL         both       1.543  1.310   1.816
+ tilted10_pitchR         both       2.093  1.707   2.567
+     flat0_pitch          one       2.029  1.862   2.211
+ tilted10_pitchL          one       1.876  1.642   2.143
+ tilted10_pitchR          one       2.202  1.954   2.480
+     flat0_pitch         none       1.881  1.727   2.050
+ tilted10_pitchL         none       1.905  1.650   2.200
+ tilted10_pitchR         none       1.752  1.523   2.015
+
+PITCH - HORIZON SLOPE FAMILY, HOLM
+    contrast antennae_grp     estimate         SE  df  asymp.LCL asymp.UCL     z.ratio   p.value p_holm
+  low - flat         both -0.035441113 0.08418424 Inf -0.2004392 0.1295570 -0.42099464 0.6737590      1
+ high - flat         both -0.031834664 0.13081186 Inf -0.2882212 0.2245519 -0.24336222 0.8077248      1
+  low - high         both -0.003606450 0.12553235 Inf -0.2496453 0.2424324 -0.02872925 0.9770805      1
+  low - flat          one -0.064350506 0.10385342 Inf -0.2678995 0.1391985 -0.61962816 0.5355026      1
+ high - flat          one -0.053682616 0.11532680 Inf -0.2797190 0.1723538 -0.46548257 0.6415859      1
+  low - high          one -0.010667890 0.13793035 Inf -0.2810064 0.2596706 -0.07734259 0.9383510      1
+  low - flat         none -0.027149266 0.08592854 Inf -0.1955661 0.1412676 -0.31595168 0.7520392      1
+ high - flat         none -0.018072047 0.08185700 Inf -0.1785088 0.1423647 -0.22077582 0.8252670      1
+  low - high         none -0.009077219 0.10101015 Inf -0.2070535 0.1888990 -0.08986443 0.9283949      1
+
+PITCH - ANTENNA SLOPE FAMILY, HOLM
+    contrast   horizon_pitch     estimate         SE  df  asymp.LCL asymp.UCL     z.ratio   p.value p_holm
+  both - one     flat0_pitch  0.038910008 0.08451390 Inf -0.1267342 0.2045542  0.46039774 0.6452308      1
+ both - none     flat0_pitch  0.035632725 0.07827464 Inf -0.1177828 0.1890482  0.45522695 0.6489460      1
+  one - none     flat0_pitch -0.003277283 0.07437589 Inf -0.1490513 0.1424968 -0.04406378 0.9648536      1
+  both - one tilted10_pitchL  0.067819400 0.10334669 Inf -0.1347364 0.2703752  0.65623198 0.5116749      1
+ both - none tilted10_pitchL  0.027340878 0.09477351 Inf -0.1584118 0.2130935  0.28848649 0.7729744      1
+  one - none tilted10_pitchL -0.040478522 0.11836388 Inf -0.2724675 0.1915104 -0.34198375 0.7323631      1
+  both - one tilted10_pitchR  0.060757960 0.15799311 Inf -0.2489028 0.3704188  0.38456082 0.7005628      1
+ both - none tilted10_pitchR  0.021870108 0.13613403 Inf -0.2449477 0.2886879  0.16065130 0.8723680      1
+  one - none tilted10_pitchR -0.038887852 0.12370827 Inf -0.2813516 0.2035759 -0.31435127 0.7532543      1
+
+============================================================
+MODEL CHECKS
+============================================================
+                 model converged                                                                 random_structure
+             roll head      TRUE                         location random intercept; fixed-effect dispersion model
+           roll thorax      TRUE                         location random intercept; fixed-effect dispersion model
+            pitch head      TRUE                         location random intercept; fixed-effect dispersion model
+          pitch thorax      TRUE                         location random intercept; fixed-effect dispersion model
+    Q4 DHGLM roll head      TRUE random beetle intercept in location and scale; DHGLM fit-validity checks applied
+  Q4 DHGLM roll thorax      TRUE random beetle intercept in location and scale; DHGLM fit-validity checks applied
+   Q4 DHGLM pitch head      TRUE random beetle intercept in location and scale; DHGLM fit-validity checks applied
+ Q4 DHGLM pitch thorax      TRUE random beetle intercept in location and scale; DHGLM fit-validity checks applied
+               Q5 roll      TRUE                            correlated random intercept + random thorax_dev slope
+              Q5 pitch      TRUE                            correlated random intercept + random thorax_dev slope
+
+TECHNICAL NOTE ON Q4
+Q4 is fitted with dhglm so beetle identity can enter both the mean and dispersion models.
+Q4 planned simple contrasts use DHGLM Wald tests regardless of omnibus p-values; adjusted-profile LRTs are used for omnibus terms, with a Wald fallback for non-monotonic one-df comparisons.
+For Q4, the model-check table reports TRUE only when the DHGLM fit returned and its likelihood, coefficients, and scale random-effect estimate are all finite.
+
+Random-effect structures:
+Roll head Q3:
+
+Conditional model:
+ Groups    Name        Std.Dev.
+ beetle_id (Intercept) 1.1832  
+ Residual                  NA  
+Roll thorax Q3:
+
+Conditional model:
+ Groups    Name        Std.Dev.
+ beetle_id (Intercept) 2.7241  
+ Residual                  NA  
+Pitch head Q3:
+
+Conditional model:
+ Groups    Name        Std.Dev.
+ beetle_id (Intercept) 4.4166  
+ Residual                  NA  
+Pitch thorax Q3:
+
+Conditional model:
+ Groups    Name        Std.Dev.
+ beetle_id (Intercept) 4.6138  
+ Residual                  NA  
+Q5 roll:
+
+Conditional model:
+ Groups    Name        Std.Dev. Corr  
+ beetle_id (Intercept) 2.135165       
+           thorax_dev  0.071525 0.085 
+ Residual                    NA       
+Q5 pitch:
+
+Conditional model:
+ Groups    Name        Std.Dev. Corr   
+ beetle_id (Intercept) 4.08740         
+           thorax_dev  0.13216  -0.801 
+ Residual                   NA         

@@ -1,0 +1,47 @@
+SCRIPT VERSION: v1-q1-nonlinearity 
+
+============================================================
+DEFINITIONS
+============================================================
+Baseline = flat horizon + both antennae, head ~ thorax deviation + (1 | beetle), as in Q1.
+Frames: roll 74 , pitch 74 
+Beetles: roll 16 , pitch 17 
+Odd cubic (x + x^3) = flat centre and steeper edges, the shape expected if stabilisation is best near the middle.
+Likelihood ratio test, AIC and BIC are against the linear model; delta = difference to the best model (0 = best).
+
+============================================================
+MODEL COMPARISON
+============================================================
+ plane     model n_par     AIC     BIC Chisq Df  p_value delta_AIC delta_BIC
+  roll    linear     4 401.537 410.753 0.000  0     <NA>     0.000     0.000
+  roll odd_cubic     5 403.196 414.716 0.341  1 5.59e-01     1.659     3.963
+  roll quadratic     5 402.757 414.277 0.780  1 3.77e-01     1.220     3.524
+  roll     cubic     6 404.690 418.514 0.847  2 6.55e-01     3.153     7.761
+  roll    spline     7 406.479 422.607 1.058  3 7.87e-01     4.942    11.854
+ pitch    linear     4 449.783 458.999 0.000  0     <NA>     3.366     0.000
+ pitch odd_cubic     5 451.442 462.962 0.341  1 5.59e-01     5.025     3.963
+ pitch quadratic     5 448.162 459.683 3.620  1 5.71e-02     1.746     0.684
+ pitch     cubic     6 446.629 460.453 7.154  2 2.80e-02     0.212     1.454
+ pitch    spline     7 446.417 462.545 9.366  3 2.48e-02     0.000     3.546
+
+============================================================
+LOCAL SLOPE FROM THE CUBIC MODEL
+============================================================
+Head degrees per thorax degree at the centre and at the edges; linear_slope is the straight-line slope.
+
+ plane        position thorax_dev_deg  slope linear_slope
+  roll 10th percentile        -18.064  0.216        0.263
+  roll          centre          0.000  0.277        0.263
+  roll 90th percentile         18.961  0.307        0.263
+ pitch 10th percentile         -9.054  0.717        0.501
+ pitch          centre          0.000  0.639        0.501
+ pitch 90th percentile         11.916 -0.052        0.501
+
+============================================================
+GAM SMOOTH
+============================================================
+Effective degrees of freedom of the thorax smooth (1 = straight line).
+
+ plane  edf
+  roll 1.00
+ pitch 2.81

@@ -1,0 +1,245 @@
+SCRIPT VERSION: v2-covariate-sensitivity 
+
+============================================================
+DEFINITIONS
+============================================================
+Main = main-analysis.R models, adjusted = same models with covariates added to the mean part.
+Both are fitted on the same rows: 829 of 920 (rows with time, date, entry axis and progress). Beetles: 41 
+time = time of day (centred hours), date = recording day (fixed factor),
+dance = entry axis * (progress + progress^2), progress = 0 at dance start, 1 at the end.
+all = date + time + dance. Q4 is run for main and all only (slow).
+Contrasts, families and Holm correction as in main-analysis.R.
+A contrast changes if its Holm p crosses 0.05 between main and adjusted.
+
+============================================================
+SUMMARY PER VERSION AND QUESTION
+============================================================
+ version question n_contrasts n_significant_main n_change_significance
+    time       Q3          54                 20                     1
+    time       Q5          27                  1                     0
+    date       Q3          54                 20                     6
+    date       Q5          27                  1                     0
+   dance       Q3          54                 20                     0
+   dance       Q5          27                  1                     0
+     all       Q3          54                 20                     6
+     all       Q4          54                  8                     5
+     all       Q5          27                  1                     0
+ max_abs_estimate_change
+                   1.299
+                   0.032
+                   5.040
+                   0.033
+                   2.157
+                   0.022
+                   4.059
+                   0.235
+                   0.069
+Estimate units: Q3 degrees, Q4 SD ratio, Q5 slope difference.
+
+============================================================
+CONTRASTS THAT CHANGE SIGNIFICANCE
+============================================================
+ version question        model  family                          contrast
+    time       Q3 pitch thorax antenna                        one - none
+    date       Q3    roll head antenna                        one - none
+    date       Q3   pitch head horizon                        low - flat
+    date       Q3   pitch head antenna                       both - none
+    date       Q3 pitch thorax antenna                        both - one
+    date       Q3 pitch thorax antenna                       both - none
+    date       Q3 pitch thorax antenna                        one - none
+     all       Q3    roll head antenna                        one - none
+     all       Q3   pitch head horizon                        low - flat
+     all       Q3   pitch head antenna                       both - none
+     all       Q3   pitch head antenna                        one - none
+     all       Q3 pitch thorax antenna                       both - none
+     all       Q3 pitch thorax antenna                        one - none
+     all       Q4   pitch head horizon     tilted10_pitchL - flat0_pitch
+     all       Q4   pitch head horizon tilted10_pitchL - tilted10_pitchR
+     all       Q4   pitch head antenna                        both - one
+     all       Q4   pitch head antenna                       both - none
+     all       Q4   pitch head antenna                        one - none
+           group estimate_main estimate_adj p_holm_main p_holm_adj
+ tilted10_pitchR        -6.111       -4.868    2.65e-02   2.22e-01
+        tilted10        -1.444       -2.544    6.04e-01   4.91e-02
+             one        -2.785       -2.616    3.57e-02   6.49e-02
+     flat0_pitch        -6.039       -1.814    1.81e-04   1.00e+00
+     flat0_pitch        -7.135       -5.883    3.86e-03   5.73e-02
+     flat0_pitch        -9.602       -4.562    3.02e-05   5.58e-01
+ tilted10_pitchR        -6.111       -4.095    2.65e-02   5.58e-01
+        tilted10        -1.444       -2.771    6.04e-01   2.79e-02
+            both        -2.809       -3.120    6.95e-02   4.17e-02
+     flat0_pitch        -6.039       -3.631    1.81e-04   2.73e-01
+ tilted10_pitchR        -3.458       -4.880    9.16e-02   1.69e-02
+     flat0_pitch        -9.602       -6.082    3.02e-05   1.11e-01
+ tilted10_pitchR        -6.111       -5.775    2.65e-02   1.11e-01
+             one         0.673        0.741    1.31e-02   8.86e-02
+            none         1.250        1.478    4.78e-01   4.95e-02
+     flat0_pitch         1.206        1.401    6.17e-01   3.63e-02
+ tilted10_pitchL         0.757        0.641    5.07e-01   3.63e-02
+ tilted10_pitchL         0.685        0.587    1.02e-01   3.63e-03
+
+============================================================
+Q1 AND Q2 BASELINE
+============================================================
+Q1 = head-thorax slope, Q2 = head / thorax SD ratio, with 95% intervals.
+Adjusted = values with the date, time and dance terms (estimated in the full-data models) removed.
+
+    question model estimate_main ci_low_main ci_high_main estimate_adj ci_low_adj
+    Q1 slope  roll         0.257       0.210        0.305        0.266      0.218
+ Q2 SD ratio  roll         0.299       0.220        0.406        0.293      0.202
+    Q1 slope pitch         0.508       0.399        0.616        0.508      0.385
+ Q2 SD ratio pitch         0.704       0.537        0.923        0.799      0.574
+ ci_high_adj
+       0.313
+       0.426
+       0.630
+       1.113
+
+============================================================
+DO THE COVARIATES MATTER?
+============================================================
+Likelihood ratio test of each block added to the model without covariates (ML fits).
+Q3 = mean orientation models, Q5 = head model with thorax deviation. Holm over all rows.
+
+           model df  chisq    p_raw                                        block
+    Q3 roll head  1  0.009 9.24e-01                                         time
+    Q3 roll head  5 18.874 2.03e-03                                         date
+    Q3 roll head  5  4.523 4.77e-01                     dance (entry * progress)
+    Q3 roll head  2  3.247 1.97e-01                 entry changes progress curve
+    Q3 roll head  1  1.431 2.32e-01 entry changes curvature (entry x progress^2)
+  Q3 roll thorax  1  1.255 2.63e-01                                         time
+  Q3 roll thorax  5  6.030 3.03e-01                                         date
+  Q3 roll thorax  5  7.340 1.97e-01                     dance (entry * progress)
+  Q3 roll thorax  2  2.326 3.12e-01                 entry changes progress curve
+  Q3 roll thorax  1  0.450 5.03e-01 entry changes curvature (entry x progress^2)
+   Q3 pitch head  1  0.486 4.86e-01                                         time
+   Q3 pitch head  5 21.066 7.87e-04                                         date
+   Q3 pitch head  5 12.984 2.35e-02                     dance (entry * progress)
+   Q3 pitch head  2  3.790 1.50e-01                 entry changes progress curve
+   Q3 pitch head  1  3.238 7.19e-02 entry changes curvature (entry x progress^2)
+ Q3 pitch thorax  1  1.558 2.12e-01                                         time
+ Q3 pitch thorax  5 19.983 1.26e-03                                         date
+ Q3 pitch thorax  5 41.369 7.90e-08                     dance (entry * progress)
+ Q3 pitch thorax  2 17.033 2.00e-04                 entry changes progress curve
+ Q3 pitch thorax  1  8.387 3.78e-03 entry changes curvature (entry x progress^2)
+    Q5 roll head  1  0.859 3.54e-01                                         time
+    Q5 roll head  5 12.236 3.17e-02                                         date
+    Q5 roll head  5  2.344 8.00e-01                     dance (entry * progress)
+    Q5 roll head  2  0.151 9.27e-01                 entry changes progress curve
+    Q5 roll head  1  0.008 9.27e-01 entry changes curvature (entry x progress^2)
+   Q5 pitch head  1  7.433 6.40e-03                                         time
+   Q5 pitch head  5 11.161 4.83e-02                                         date
+   Q5 pitch head  5  6.901 2.28e-01                     dance (entry * progress)
+   Q5 pitch head  2  2.653 2.65e-01                 entry changes progress curve
+   Q5 pitch head  1  0.043 8.36e-01 entry changes curvature (entry x progress^2)
+   p_holm
+ 1.00e+00
+ 5.28e-02
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 2.20e-02
+ 5.41e-01
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 3.40e-02
+ 2.37e-06
+ 5.80e-03
+ 9.45e-02
+ 1.00e+00
+ 6.97e-01
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.54e-01
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+ 1.00e+00
+
+============================================================
+ARE THE COVARIATES MIXED UP WITH THE DESIGN?
+============================================================
+Number of frames (not beetles), rows used in the adjusted models.
+
+Date by antennae
+            
+             both one none
+  2026-02-17   45  68    0
+  2026-02-18   45  60    0
+  2026-02-20  100  83   34
+  2026-02-21   35  69   81
+  2026-02-22   16   8   83
+  2026-02-23   12   0   90
+
+Date by horizon
+            
+             flat0 tilted10
+  2026-02-17    59       54
+  2026-02-18    51       54
+  2026-02-20    94      123
+  2026-02-21    79      106
+  2026-02-22    89       18
+  2026-02-23    44       58
+
+Entry axis by horizon
+      
+       flat0 tilted10
+  post   247      315
+  head   169       98
+
+Entry axis by antennae
+      
+       both one none
+  post  169 191  202
+  head   84  97   86
+
+============================================================
+ANTENNA SIDE: RIGHT VERSUS LEFT
+============================================================
+Right and left antenna split in the one-antenna group, all rows, no covariates.
+LRT = does separating right and left improve the model, Q3 and Q5 on the mean, Q4 on the scale.
+
+           model                 test df chisq        p
+    Q3 roll head all side terms (LRT)  2 1.916 3.84e-01
+  Q3 roll thorax all side terms (LRT)  2 0.219 8.96e-01
+   Q3 pitch head all side terms (LRT)  3 4.931 1.77e-01
+ Q3 pitch thorax all side terms (LRT)  3 8.085 4.43e-02
+    Q5 roll head all side terms (LRT)  4 3.143 5.34e-01
+   Q5 pitch head all side terms (LRT)  6 8.649 1.94e-01
+
+Right - left within each horizon (Holm over horizons). Q3 degrees, Q4 SD ratio, Q5 slope.
+
+ question           model           group estimate    p_raw   p_holm
+       Q3    Q3 roll head           flat0   -1.955 2.04e-01 4.07e-01
+       Q3    Q3 roll head        tilted10    0.563 6.91e-01 6.91e-01
+       Q3  Q3 roll thorax           flat0   -2.001 6.33e-01 1.00e+00
+       Q3  Q3 roll thorax        tilted10   -0.836 8.44e-01 1.00e+00
+       Q3   Q3 pitch head     flat0_pitch   -0.755 6.87e-01 1.00e+00
+       Q3   Q3 pitch head tilted10_pitchL    3.483 7.65e-02 2.29e-01
+       Q3   Q3 pitch head tilted10_pitchR   -0.809 7.20e-01 1.00e+00
+       Q3 Q3 pitch thorax     flat0_pitch    2.962 3.11e-01 6.22e-01
+       Q3 Q3 pitch thorax tilted10_pitchL    9.028 4.28e-03 1.28e-02
+       Q3 Q3 pitch thorax tilted10_pitchR    1.315 7.03e-01 7.03e-01
+       Q5    Q5 roll head           flat0   -0.011 8.63e-01 8.63e-01
+       Q5    Q5 roll head        tilted10    0.081 1.60e-01 3.21e-01
+       Q5   Q5 pitch head     flat0_pitch    0.141 2.73e-01 6.74e-01
+       Q5   Q5 pitch head tilted10_pitchL   -0.015 9.40e-01 9.40e-01
+       Q5   Q5 pitch head tilted10_pitchR   -0.254 2.25e-01 6.74e-01
+       Q4    Q4 roll head           flat0    1.251 2.14e-01 2.14e-01
+       Q4    Q4 roll head        tilted10    2.509 1.92e-08 3.84e-08
+       Q4  Q4 roll thorax           flat0    1.262 1.74e-01 1.74e-01
+       Q4  Q4 roll thorax        tilted10    1.629 1.89e-03 3.78e-03
+       Q4   Q4 pitch head     flat0_pitch    1.111 4.96e-01 9.93e-01
+       Q4   Q4 pitch head tilted10_pitchL    1.026 9.05e-01 9.93e-01
+       Q4   Q4 pitch head tilted10_pitchR    0.759 1.54e-01 4.62e-01
+       Q4 Q4 pitch thorax     flat0_pitch    1.380 5.40e-02 1.08e-01
+       Q4 Q4 pitch thorax tilted10_pitchL    1.311 2.32e-01 2.32e-01
+       Q4 Q4 pitch thorax tilted10_pitchR    1.938 1.24e-03 3.73e-03

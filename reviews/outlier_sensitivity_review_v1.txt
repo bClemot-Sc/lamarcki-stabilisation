@@ -1,0 +1,44 @@
+SCRIPT VERSION: v1-outlier-sensitivity 
+
+============================================================
+DEFINITIONS
+============================================================
+Removed = main analysis (outliers removed), all = same models with every value kept.
+Head values removed in the main analysis: 5 
+Thorax values removed in the main analysis: 3 
+Contrasts, families and Holm correction as in main-analysis.R.
+A contrast changes if its Holm p crosses 0.05 between the two versions.
+
+============================================================
+SUMMARY PER QUESTION
+============================================================
+ question n_contrasts n_change_significance max_abs_estimate_change
+       Q3          54                     2                   1.458
+       Q4          54                     1                   0.220
+       Q5          27                     1                   0.056
+Estimate units: Q3 degrees, Q4 SD ratio, Q5 slope difference.
+
+============================================================
+Q1 AND Q2 BASELINE
+============================================================
+Q1 = head-thorax slope, Q2 = head / thorax SD ratio, with 95% intervals.
+
+    question model estimate_removed ci_low_removed ci_high_removed estimate_all ci_low_all ci_high_all
+    Q1 slope  roll            0.263          0.212           0.313        0.263      0.212       0.313
+ Q2 SD ratio  roll            0.316          0.221           0.450        0.316      0.221       0.450
+    Q1 slope pitch            0.501          0.401           0.600        0.501      0.401       0.600
+ Q2 SD ratio pitch            0.696          0.560           0.864        0.696      0.560       0.864
+
+============================================================
+CONTRASTS THAT CHANGE SIGNIFICANCE
+============================================================
+ question      model  family                      contrast           group estimate_removed estimate_all
+       Q3 pitch head antenna                    both - one     flat0_pitch           -3.069       -3.510
+       Q3 pitch head antenna                   both - none tilted10_pitchL           -3.233       -3.549
+       Q4 pitch head horizon tilted10_pitchR - flat0_pitch            both            0.674        0.694
+       Q5  roll head antenna                    one - none        tilted10            0.067        0.117
+ p_holm_removed p_holm_all
+       8.06e-02   4.23e-02
+       8.06e-02   4.23e-02
+       3.23e-02   6.22e-02
+       3.83e-01   6.15e-03
